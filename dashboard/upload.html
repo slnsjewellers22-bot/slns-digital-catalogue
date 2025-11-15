@@ -1,0 +1,80 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SLNS Upload</title><link rel="stylesheet" href="/style.css"></head><body style="background:#07080a;color:#eaf2f8;padding:20px">
+<div style="max-width:980px;margin:20px auto;background:linear-gradient(180deg,#0b0c0e,#0f1215);padding:18px;border-radius:12px">
+<h2 style="color:#caa164">Upload New Items (GitHub)</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+  <input id="owner" placeholder="GitHub username (owner)" style="padding:8px"/>
+  <input id="repo" placeholder="Repo name" style="padding:8px"/>
+  <input id="branch" placeholder="Branch (main)" value="main" style="padding:8px"/>
+</div>
+<div style="margin:10px 0">
+  <label>Category</label>
+  <select id="cat">
+    <option>bangles</option><option>bracelet</option><option>chain</option><option>chandraharalu</option><option>earring</option><option>kada</option><option>locket</option><option>necklace</option><option>npchains</option><option>ring</option>
+  </select>
+  <label style="margin-left:12px">Weight (g)</label>
+  <input id="w" type="number" step="0.001" style="width:120px"/>
+</div>
+<input id="pat" type="password" placeholder="GitHub Personal Access Token (kept in session only)" style="width:100%;padding:8px;margin-top:8px"/>
+<input id="files" type="file" multiple accept="image/*"/><div id="preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
+<button id="publish" style="background:#caa164;color:#081126;padding:10px;border-radius:8px;margin-top:12px">Publish All to GitHub</button>
+<div id="status"></div>
+</div>
+<script>
+if(sessionStorage.getItem('slns_admin')!=='true') location.href='/dashboard/';
+const filesInput = document.getElementById('files'), preview = document.getElementById('preview');
+let selectedFiles = [];
+filesInput.addEventListener('change', (e)=>{ selectedFiles = Array.from(e.target.files); preview.innerHTML=''; selectedFiles.forEach((f)=>{ const box=document.createElement('div'); box.style.width='140px'; box.style.padding='8px'; box.style.background='#071018'; box.style.borderRadius='8px'; const img=document.createElement('img'); img.src=URL.createObjectURL(f); img.style.width='100%'; img.style.height='100px'; img.style.objectFit='cover'; const name=document.createElement('div'); name.textContent=f.name; name.style.color='#eaf2f8'; name.style.fontSize='12px'; const w=document.createElement('input'); w.type='number'; w.step='0.001'; w.placeholder='weight'; w.style.width='100%'; w.style.marginTop='6px'; box.appendChild(img); box.appendChild(name); box.appendChild(w); preview.appendChild(box); }); });
+
+async function publishToGitHub(){
+  const owner = document.getElementById('owner').value.trim();
+  const repo = document.getElementById('repo').value.trim();
+  const branch = document.getElementById('branch').value.trim() || 'main';
+  const pat = document.getElementById('pat').value.trim();
+  const cat = document.getElementById('cat').value;
+  const weightInputs = Array.from(preview.querySelectorAll('input[type=number]'));
+  if(!owner||!repo||!pat) return alert('Enter GitHub owner, repo and PAT');
+  if(selectedFiles.length===0) return alert('Choose images');
+  document.getElementById('status').textContent='Uploading...';
+  // load existing items.json if any
+  let items = [];
+  try{
+    const resp = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/items.json`);
+    if(resp.ok) items = await resp.json();
+  }catch(e){ items = []; }
+  for(let i=0;i<selectedFiles.length;i++){
+    const f = selectedFiles[i];
+    const w = parseFloat(weightInputs[i].value) || 0;
+    const id = f.name.replace(/\\.[^/.]+$/,'');
+    const path = `images/${id}.jpg`;
+    // read file as base64
+    const b64 = await toBase64(f);
+    // PUT to GitHub contents API
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+    const body = { message: `Add ${path}`, content: b64.split(',')[1], branch };
+    const res = await fetch(url, { method:'PUT', headers:{ Authorization: 'token '+pat, Accept:'application/vnd.github.v3+json'}, body:JSON.stringify(body)});
+    const data = await res.json();
+    if(res.status===201 || res.status===200){
+      const download_url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
+      items.push({ id, name: id.replace(/_/g,' '), metal:'gold', category:cat, weight:w, imageURL: download_url, timestamp: Date.now() });
+      document.getElementById('status').textContent = `Uploaded ${f.name}`;
+    } else {
+      console.error('GitHub error', data);
+      alert('Upload failed for '+f.name+': '+(data.message||JSON.stringify(data)));
+    }
+  }
+  // update items.json in repo
+  const itemsPath = 'items.json';
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(items, null, 2))));
+  const urlItems = `https://api.github.com/repos/${owner}/${repo}/contents/${itemsPath}`;
+  const bodyItems = { message:'Update items.json', content, branch };
+  // try to fetch existing file to get sha (PUT to update requires either create or update; GitHub accepts PUT without sha for create)
+  const resItems = await fetch(urlItems, { method:'PUT', headers:{ Authorization:'token '+pat, Accept:'application/vnd.github.v3+json'}, body:JSON.stringify(bodyItems)});
+  const dataItems = await resItems.json();
+  if(resItems.status===201 || resItems.status===200){ document.getElementById('status').textContent='All done. items.json updated.'; } else { console.error(dataItems); alert('Failed to update items.json: '+(dataItems.message||JSON.stringify(dataItems))); }
+}
+
+function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=err=>rej(err); r.readAsDataURL(file); }); }
+
+document.getElementById('publish').addEventListener('click', publishToGitHub);
+</script></body></html>
