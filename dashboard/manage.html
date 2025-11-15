@@ -1,0 +1,325 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manage Items — SLNS</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  body{background:#07080a;color:#eaf2f8;font-family:Arial;margin:0}
+  .top{background:#0c0f13;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+  .top h2{color:#caa164;margin:0}
+  .container{max-width:1100px;margin:20px auto;padding:16px}
+  .toolbar{display:flex;gap:8px;margin-bottom:12px}
+  .search{flex:1;padding:8px;border-radius:8px;background:#081018;border:1px solid #162225;color:#eaf2f8}
+  .btn{background:#caa164;color:#081126;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+  .list{margin-top:12px;background:#0b0e12;padding:12px;border-radius:10px;border:1px solid #14171c}
+  .row{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid #14171c}
+  .row:last-child{border-bottom:none}
+  .thumb{width:84px;height:84px;object-fit:cover;border-radius:6px;background:#071018}
+  .meta{flex:1}
+  .meta .title{color:#caa164;font-weight:700}
+  .actions{display:flex;gap:6px}
+  .small{padding:6px 8px;border-radius:6px;border:none;cursor:pointer}
+  .editPanel{background:#071018;padding:12px;border-radius:8px;margin-top:12px}
+  input,select{background:#061018;color:#eaf2f8;border:1px solid #162225;padding:8px;border-radius:6px}
+  .danger{background:#7b2121;color:#fff}
+</style>
+</head>
+<body>
+  <div class="top"><h2>Manage Items</h2><div><a href="/dashboard/" style="color:#eaf2f8;text-decoration:none;margin-right:8px">Back</a><button id="logout" class="btn">Logout</button></div></div>
+
+  <div class="container">
+    <div class="toolbar">
+      <input id="search" class="search" placeholder="Search by name or id">
+      <button id="refresh" class="btn">Refresh</button>
+      <button id="bulkDelete" class="btn danger" title="Delete selected">Delete Selected</button>
+    </div>
+
+    <div id="list" class="list">Loading items...</div>
+
+    <!-- Edit Modal (inline panel) -->
+    <div id="editModal" style="display:none" class="editPanel">
+      <h3 style="color:#caa164;margin-top:0">Edit Item</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="flex:1">
+          <label>Name</label><br><input id="editName" type="text" />
+        </div>
+        <div style="width:160px">
+          <label>Category</label><br>
+          <select id="editCat"><option>bangles</option><option>bracelet</option><option>chain</option><option>chandraharalu</option><option>earring</option><option>kada</option><option>locket</option><option>necklace</option><option>npchains</option><option>ring</option></select>
+        </div>
+        <div style="width:140px">
+          <label>Weight (g)</label><br><input id="editWeight" type="number" step="0.001" />
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button id="saveEdit" class="btn">Save</button>
+        <button id="cancelEdit" class="small">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Replace image input (hidden) -->
+    <input id="replaceFile" type="file" accept="image/*" style="display:none" />
+
+    <div id="status" style="margin-top:12px;color:#9fb0bd"></div>
+  </div>
+
+<script>
+if(sessionStorage.getItem('slns_admin')!=='true') window.location.href='/dashboard/';
+
+const owner = localStorage.getItem('github_owner') || 'slnsjewellers22-bot';
+const repo = localStorage.getItem('github_repo') || 'slns-digital-catalogue';
+const branch = localStorage.getItem('github_branch') || 'main';
+
+let items = [];
+let filtered = [];
+let selected = new Set();
+let editingIndex = -1;
+
+// load items.json
+async function loadItems(){
+  document.getElementById('status').textContent = 'Loading items...';
+  try{
+    const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/items.json?${Date.now()}`);
+    if(!r.ok) throw 'no file';
+    items = await r.json();
+    filtered = items.slice();
+    renderList();
+    document.getElementById('status').textContent = 'Loaded '+items.length+' items';
+  }catch(e){
+    document.getElementById('list').innerHTML = '<div style="color:#9fb0bd">No items.json found or failed to fetch.</div>';
+    document.getElementById('status').textContent = 'Failed to load items.json';
+  }
+}
+
+function renderList(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  filtered = items.filter(it => !q || (it.name && it.name.toLowerCase().includes(q)) || (it.id && it.id.toLowerCase().includes(q)));
+  const list = document.getElementById('list');
+  if(filtered.length===0){ list.innerHTML = '<div style="color:#9fb0bd">No items match.</div>'; return; }
+  list.innerHTML = '';
+  filtered.forEach((it, idx) => {
+    const row = document.createElement('div'); row.className='row';
+    const chk = document.createElement('input'); chk.type='checkbox'; chk.style.width='18px'; chk.checked = selected.has(it.id);
+    chk.addEventListener('change', ()=>{ if(chk.checked) selected.add(it.id); else selected.delete(it.id); });
+    const img = document.createElement('img'); img.src = it.imageURL || (`/images/${it.id}.jpg`); img.className='thumb';
+    img.onerror = ()=>{ img.src=''; img.style.background='#081018'; img.alt='No image' };
+    const meta = document.createElement('div'); meta.className='meta';
+    meta.innerHTML = `<div class="title">${it.name || it.id} <small style="color:#9fb0bd">(${it.id})</small></div><div style="color:#9fb0bd">Category: ${it.category} • Weight: ${it.weight? it.weight+' g':''}</div>`;
+    const actions = document.createElement('div'); actions.className='actions';
+    // edit
+    const btnEdit = document.createElement('button'); btnEdit.className='small'; btnEdit.textContent='Edit';
+    btnEdit.addEventListener('click', ()=>openEdit(it));
+    // replace
+    const btnReplace = document.createElement('button'); btnReplace.className='small'; btnReplace.textContent='Replace Image';
+    btnReplace.addEventListener('click', ()=>triggerReplace(it));
+    // rename
+    const btnRename = document.createElement('button'); btnRename.className='small'; btnRename.textContent='Rename';
+    btnRename.addEventListener('click', ()=>renameItem(it));
+    // delete
+    const btnDel = document.createElement('button'); btnDel.className='small danger'; btnDel.textContent='Delete';
+    btnDel.addEventListener('click', ()=>deleteItem(it));
+    actions.appendChild(btnEdit); actions.appendChild(btnReplace); actions.appendChild(btnRename); actions.appendChild(btnDel);
+
+    row.appendChild(chk); row.appendChild(img); row.appendChild(meta); row.appendChild(actions);
+    list.appendChild(row);
+  });
+}
+
+// Edit flow
+function openEdit(it){
+  editingIndex = items.findIndex(x=>x.id===it.id);
+  document.getElementById('editName').value = it.name || it.id;
+  document.getElementById('editCat').value = it.category || '';
+  document.getElementById('editWeight').value = it.weight || '';
+  document.getElementById('editModal').style.display = 'block';
+}
+document.getElementById('cancelEdit').addEventListener('click', ()=>{ document.getElementById('editModal').style.display='none'; editingIndex=-1; });
+document.getElementById('saveEdit').addEventListener('click', async ()=>{
+  if(editingIndex<0) return;
+  const name = document.getElementById('editName').value.trim();
+  const cat = document.getElementById('editCat').value;
+  const weight = parseFloat(document.getElementById('editWeight').value) || 0;
+  items[editingIndex].name = name;
+  items[editingIndex].category = cat;
+  items[editingIndex].weight = weight;
+  // commit items.json
+  await commitItems('Update item metadata');
+  document.getElementById('editModal').style.display='none';
+  editingIndex=-1;
+  renderList();
+});
+
+// Replace image
+const replaceFile = document.getElementById('replaceFile');
+let replaceTargetId = null;
+function triggerReplace(it){
+  replaceTargetId = it.id;
+  replaceFile.click();
+}
+replaceFile.addEventListener('change', async (e)=>{
+  if(!replaceTargetId) return;
+  const f = e.target.files[0];
+  if(!f) return;
+  if(!confirm('Replace image for '+replaceTargetId+'?')) return;
+  await uploadReplacement(replaceTargetId, f);
+  replaceFile.value = '';
+  replaceTargetId = null;
+  await loadItems();
+});
+
+// rename item (change id + image path + item object)
+async function renameItem(it){
+  const newName = prompt('New ID (file base name) — only letters/numbers/underscore recommended', it.id);
+  if(!newName || newName.trim()===it.id) return;
+  if(!confirm(`Rename ${it.id} → ${newName}? This will attempt to rename image file and update items.json.`)) return;
+  // copy image to new path using GitHub API then delete old image and update items array
+  const oldPath = `images/${it.id}.jpg`;
+  const newPath = `images/${newName}.jpg`;
+  try{
+    await copyFileInRepo(oldPath, newPath, `Rename ${oldPath} → ${newPath}`);
+    // delete old file
+    await deleteFileInRepo(oldPath, `Remove old image ${oldPath}`);
+    // update items object
+    it.id = newName;
+    it.name = newName.replace(/_/g,' ');
+    it.imageURL = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${newPath}`;
+    await commitItems('Update items.json after rename');
+    alert('Renamed successfully');
+    loadItems();
+  }catch(err){
+    alert('Rename failed: '+err.message);
+  }
+}
+
+// delete item (image + item entry)
+async function deleteItem(it){
+  if(!confirm(`Delete item ${it.name || it.id}? This will remove image and metadata.`)) return;
+  const path = `images/${it.id}.jpg`;
+  try{
+    await deleteFileInRepo(path, `Delete image ${path}`);
+    // remove from items array
+    items = items.filter(x=>x.id!==it.id);
+    await commitItems('Remove item '+it.id);
+    alert('Deleted');
+    loadItems();
+  }catch(err){
+    alert('Delete failed: '+(err.message||err));
+  }
+}
+
+// bulk delete selected
+document.getElementById('bulkDelete').addEventListener('click', async ()=>{
+  if(selected.size===0){ alert('No items selected'); return; }
+  if(!confirm('Delete selected items?')) return;
+  for(const id of Array.from(selected)){
+    try{
+      await deleteFileInRepo(`images/${id}.jpg`, `Bulk delete ${id}`);
+      items = items.filter(x=>x.id!==id);
+    }catch(e){
+      console.error('bulk delete failed', e);
+    }
+  }
+  selected.clear();
+  await commitItems('Bulk delete items');
+  loadItems();
+});
+
+// =====================
+// GitHub helpers
+// =====================
+
+function getPAT(){
+  return sessionStorage.getItem('github_pat') || '';
+}
+function requirePAT(){
+  const p = getPAT();
+  if(!p){
+    alert('PAT missing — open Upload page to enter token (session only).');
+    return null;
+  }
+  return p;
+}
+
+async function commitItems(message){
+  const pat = requirePAT();
+  if(!pat) return Promise.reject('No PAT');
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(items, null, 2))));
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/items.json`;
+  const body = { message, content, branch };
+  const res = await fetch(url, { method:'PUT', headers:{ Authorization:'token '+pat, Accept:'application/vnd.github.v3+json' }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if(!(res.status===200||res.status===201)) throw new Error(data.message||JSON.stringify(data));
+}
+
+async function uploadReplacement(id, file){
+  const pat = requirePAT(); if(!pat) return;
+  const path = `images/${id}.jpg`;
+  const b64 = await toBase64(file);
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+  // To replace an existing file we should include sha; but PUT without sha will create if not exists; to update an existing file, GitHub requires sha.
+  // We'll first fetch existing file info to get sha.
+  const metaRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${branch}`);
+  let sha = null;
+  if(metaRes.ok){
+    const meta = await metaRes.json();
+    sha = meta.sha;
+  }
+  const body = { message:`Replace ${path}`, content: b64.split(',')[1], branch };
+  if(sha) body.sha = sha;
+  const res = await fetch(url, { method:'PUT', headers:{ Authorization:'token '+pat, Accept:'application/vnd.github.v3+json' }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if(!(res.status===200||res.status===201)) throw new Error(data.message||JSON.stringify(data));
+  // update item's imageURL timestamp
+  const it = items.find(x=>x.id===id);
+  if(it){ it.timestamp = Date.now(); await commitItems('Update metadata after replacement'); }
+}
+
+async function deleteFileInRepo(path, message){
+  const pat = requirePAT(); if(!pat) throw 'No PAT';
+  // we need the sha of the file to delete
+  const metaRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${branch}`);
+  if(!metaRes.ok) throw new Error('File not found or no permission');
+  const meta = await metaRes.json();
+  const sha = meta.sha;
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+  const body = { message, sha, branch };
+  const res = await fetch(url, { method:'DELETE', headers:{ Authorization:'token '+getPAT(), Accept:'application/vnd.github.v3+json' }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if(!(res.status===200||res.status===201)) throw new Error(data.message||JSON.stringify(data));
+}
+
+async function copyFileInRepo(srcPath, destPath, message){
+  // fetch src, then create dest (PUT with content)
+  const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${srcPath}`;
+  const r = await fetch(rawUrl);
+  if(!r.ok) throw new Error('Source file not found');
+  const blob = await r.blob();
+  const b64 = await blobToBase64(blob);
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(destPath)}`;
+  const body = { message, content: b64.split(',')[1], branch };
+  const res = await fetch(url, { method:'PUT', headers:{ Authorization:'token '+getPAT(), Accept:'application/vnd.github.v3+json' }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if(!(res.status===200||res.status===201)) throw new Error(data.message||JSON.stringify(data));
+}
+
+// util
+function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=err=>rej(err); r.readAsDataURL(file); }); }
+function blobToBase64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=err=>rej(err); r.readAsDataURL(blob); }); }
+
+// rename helper (done by copy + delete + update items.json)
+async function renameFileInRepo(oldPath, newPath){
+  await copyFileInRepo(oldPath, newPath, `Rename ${oldPath} -> ${newPath}`);
+  await deleteFileInRepo(oldPath, `Remove old ${oldPath}`);
+}
+
+// search / refresh handlers
+document.getElementById('search').addEventListener('input', renderList);
+document.getElementById('refresh').addEventListener('click', loadItems);
+document.getElementById('logout').addEventListener('click', ()=>{ sessionStorage.removeItem('slns_admin'); window.location.href='/dashboard/'; });
+
+// initialize
+loadItems();
+</script>
+</body>
+</html>
