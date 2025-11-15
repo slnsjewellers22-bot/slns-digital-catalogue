@@ -1,37 +1,75 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SLNS Dashboard</title><link rel="stylesheet" href="/style.css"></head>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SLNS Dashboard</title>
+<link rel="stylesheet" href="/style.css">
+</head>
 <body>
-<header style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;background:#0f1215;color:#caa164">
-  <div>SLNS Admin Panel</div><div><button id="logout" style="background:#caa164;border:none;padding:8px;border-radius:8px">Logout</button></div>
-</header>
-<main style="padding:20px">
-  <section id="stats" style="display:flex;gap:12px;flex-wrap:wrap"></section>
-  <section style="margin-top:20px">
-    <h3 style="color:#caa164">Recent Uploads</h3>
-    <div id="recent"></div>
-  </section>
-  <section style="margin-top:20px">
-    <a href="/dashboard/upload.html" style="background:#caa164;color:#081126;padding:10px;border-radius:8px;text-decoration:none">Upload New Items</a>
-  </section>
-</main>
+  <div class="topbar" style="background:#0c0f13;padding:14px 20px;display:flex;justify-content:space-between;align-items:center">
+    <div style="color:#caa164;font-weight:700">SLNS Admin Panel</div>
+    <div style="display:flex;gap:8px">
+      <a href="/dashboard/upload.html" style="background:#caa164;color:#081126;padding:8px 12px;border-radius:8px;text-decoration:none">Upload</a>
+      <a href="/dashboard/manage.html" style="background:#caa164;color:#081126;padding:8px 12px;border-radius:8px;text-decoration:none">Manage Items</a>
+      <button id="logout" style="background:#111;border:1px solid #2a2f33;color:#eaf2f8;padding:8px 12px;border-radius:8px">Logout</button>
+    </div>
+  </div>
+
+  <main style="max-width:1100px;margin:24px auto;padding:0 16px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+      <div style="background:#0b0e12;padding:18px;border-radius:10px;border:1px solid #14171c">
+        <div style="color:#9fb0bd">Total Items</div>
+        <div id="totalItems" style="font-size:28px;font-weight:700;color:#caa164;margin-top:8px">0</div>
+      </div>
+      <div style="background:#0b0e12;padding:18px;border-radius:10px;border:1px solid #14171c">
+        <div style="color:#9fb0bd">Total Weight</div>
+        <div id="totalWeight" style="font-size:28px;font-weight:700;color:#caa164;margin-top:8px">0 g</div>
+      </div>
+      <div style="background:#0b0e12;padding:18px;border-radius:10px;border:1px solid #14171c">
+        <div style="color:#9fb0bd">Last Updated</div>
+        <div id="lastUpdated" style="font-size:20px;font-weight:700;color:#caa164;margin-top:8px">--</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px">
+      <button id="refreshBtn" style="background:#caa164;border:none;padding:10px 14px;border-radius:8px;color:#081126;font-weight:700">Refresh</button>
+    </div>
+
+    <h3 style="color:#caa164;margin-top:30px">Recent Uploads</h3>
+    <div id="recentList" style="background:#0b0e12;padding:12px;border-radius:10px;border:1px solid #14171c;margin-top:10px;max-height:360px;overflow:auto"></div>
+  </main>
+
 <script>
 if(sessionStorage.getItem('slns_admin')!=='true'){ window.location.href='/dashboard/'; }
-document.getElementById('logout').addEventListener('click', ()=>{ sessionStorage.removeItem('slns_admin'); window.location.href='/dashboard/'; });
 
-async function loadRecent(){
+const owner = localStorage.getItem('github_owner') || 'slnsjewellers22-bot';
+const repo = localStorage.getItem('github_repo') || 'slns-digital-catalogue';
+const branch = localStorage.getItem('github_branch') || 'main';
+
+async function loadStats(){
+  const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/items.json?${Date.now()}`;
   try{
-    const resp = await fetch('/items.json');
-    if(!resp.ok) throw 'no items';
-    const items = await resp.json();
-    const total = items.length;
-    const totalW = items.reduce((s,i)=>s + (parseFloat(i.weight)||0),0);
-    document.getElementById('stats').innerHTML = `<div style="background:#0b0c0e;padding:12px;border-radius:8px;min-width:180px"><div style="color:#9fb0bd">Total Items</div><div style="font-size:20px;color:#caa164">${total}</div></div><div style="background:#0b0c0e;padding:12px;border-radius:8px;min-width:220px"><div style="color:#9fb0bd">Total Gold Weight</div><div style="font-size:20px;color:#caa164">${totalW.toFixed(3)} g</div></div>`;
-    const recent = items.slice(-6).reverse();
-    document.getElementById('recent').innerHTML = recent.map(it=>`<div style="padding:8px;background:#0f1418;margin:6px;border-radius:8px"><strong style="color:#caa164">${it.name}</strong> — ${it.weight} g</div>`).join('');
+    const r = await fetch(url);
+    if(!r.ok) throw 'no items';
+    const items = await r.json();
+    document.getElementById('totalItems').textContent = items.length;
+    const totalW = items.reduce((s,i)=> s + (parseFloat(i.weight)||0), 0);
+    document.getElementById('totalWeight').textContent = totalW.toFixed(3) + ' g';
+    const last = items.reduce((m,i)=> i.timestamp && i.timestamp>m ? i.timestamp : m, 0);
+    document.getElementById('lastUpdated').textContent = last ? new Date(last).toLocaleString() : '--';
+    const recent = items.slice(-20).reverse();
+    const recentList = document.getElementById('recentList');
+    recentList.innerHTML = recent.map(it=>`<div style="padding:8px;border-bottom:1px solid #14171c"><strong style="color:#caa164">${it.name}</strong><div style="color:#9fb0bd">Category: ${it.category} • ${it.weight?it.weight+' g':''} • ${it.timestamp? new Date(it.timestamp).toLocaleString():''}</div></div>`).join('');
   }catch(e){
-    document.getElementById('stats').innerHTML = '<div style="color:#9fb0bd">No items.json found. Upload items to create it.</div>';
+    document.getElementById('recentList').innerHTML = '<div style="color:#9fb0bd">No data found (items.json missing)</div>';
   }
 }
-loadRecent();
+
+document.getElementById('refreshBtn').addEventListener('click', loadStats);
+document.getElementById('logout').addEventListener('click', ()=>{ sessionStorage.removeItem('slns_admin'); window.location.href='/dashboard/'; });
+
+loadStats();
 </script>
-</body></html>
+</body>
+</html>
