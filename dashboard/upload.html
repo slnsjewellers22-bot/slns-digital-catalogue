@@ -27,10 +27,18 @@ let selectedFiles = [];
 filesInput.addEventListener('change', (e)=>{ selectedFiles = Array.from(e.target.files); preview.innerHTML=''; selectedFiles.forEach((f)=>{ const box=document.createElement('div'); box.style.width='140px'; box.style.padding='8px'; box.style.background='#071018'; box.style.borderRadius='8px'; const img=document.createElement('img'); img.src=URL.createObjectURL(f); img.style.width='100%'; img.style.height='100px'; img.style.objectFit='cover'; const name=document.createElement('div'); name.textContent=f.name; name.style.color='#eaf2f8'; name.style.fontSize='12px'; const w=document.createElement('input'); w.type='number'; w.step='0.001'; w.placeholder='weight'; w.style.width='100%'; w.style.marginTop='6px'; box.appendChild(img); box.appendChild(name); box.appendChild(w); preview.appendChild(box); }); });
 
 async function publishToGitHub(){
-  const owner = document.getElementById('owner').value.trim();
-  const repo = document.getElementById('repo').value.trim();
-  const branch = document.getElementById('branch').value.trim() || 'main';
-  const pat = document.getElementById('pat').value.trim();
+  // Auto load stored values
+document.getElementById('owner').value = localStorage.getItem("github_owner") || "slnsjewellers22-bot";
+document.getElementById('repo').value = localStorage.getItem("github_repo") || "slns-digital-catalogue";
+document.getElementById('branch').value = localStorage.getItem("github_branch") || "main";
+
+// Save on input
+["owner", "repo", "branch"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    localStorage.setItem("github_" + id, document.getElementById(id).value.trim());
+  });
+});
+
   const cat = document.getElementById('cat').value;
   const weightInputs = Array.from(preview.querySelectorAll('input[type=number]'));
   if(!owner||!repo||!pat) return alert('Enter GitHub owner, repo and PAT');
@@ -78,3 +86,4 @@ function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(
 
 document.getElementById('publish').addEventListener('click', publishToGitHub);
 </script></body></html>
+
