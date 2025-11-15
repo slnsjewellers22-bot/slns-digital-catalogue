@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "id": "gold_bangles7",
+    "name": "gold bangles7",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 45,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles7.jpg",
+    "timestamp": 1763210917148
+  }
+]
