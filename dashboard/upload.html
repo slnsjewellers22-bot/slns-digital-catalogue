@@ -1,157 +1,274 @@
 <!doctype html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Upload — SLNS</title><link rel="stylesheet" href="/style.css"></head>
-<body style="background:#07080a;color:#eaf2f8;padding:20px">
-<div style="max-width:980px;margin:20px auto;background:linear-gradient(180deg,#0b0c0e,#0f1215);padding:18px;border-radius:12px">
-  <h2 style="color:#caa164">Upload New Items</h2>
-  <div style="margin:14px 0">
-    <label>Category</label>
-    <select id="cat">
-      <option>bangles</option><option>bracelet</option><option>chain</option><option>chandraharalu</option><option>earring</option><option>kada</option><option>locket</option><option>necklace</option><option>npchains</option><option>ring</option>
-    </select>
-    <label style="margin-left:12px">Global weight (optional)</label>
-    <input id="globalWeight" type="number" step="0.001" style="width:120px">
-  </div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Upload — SLNS</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* extra small styling for upload page */
+    .card { max-width:980px;margin:20px auto;background:linear-gradient(180deg,#0b0c0e,#0f1215);padding:18px;border-radius:12px }
+    .flex { display:flex; gap:12px; align-items:center; flex-wrap:wrap }
+    .file-drop { border:2px dashed #162225; padding:24px; border-radius:10px; width:100%; cursor:pointer; background:linear-gradient(180deg,#071018,#061018) }
+    .preview { display:flex; flex-wrap:wrap; gap:12px; margin-top:12px }
+    .preview .box { width:150px; padding:10px; background:#071018; border-radius:8px; }
+    .preview img { width:100%; height:110px; object-fit:cover; border-radius:6px; }
+    .small { font-size:13px; color:#9fb0bd }
+    .btn-primary { background:#caa164; color:#081126; border:none; padding:10px 14px; border-radius:8px; cursor:pointer }
+    .muted { color:#9fb0bd }
+  </style>
+</head>
+<body style="background:#07080a;color:#eaf2f8;font-family:Arial,Helvetica,sans-serif">
 
-  <!-- Hidden inputs (auto-saved) -->
-  <div style="display:none">
-    <input id="owner"><input id="repo"><input id="branch"><input id="pat">
-  </div>
+  <div class="card">
+    <h2 style="color:#caa164;margin:0 0 8px 0">Upload New Items — SLNS</h2>
 
-  <input id="files" type="file" multiple accept="image/*" style="margin-top:12px"/>
-  <div id="preview" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px"></div>
+    <!-- Hidden saved GitHub settings -->
+    <div style="display:none">
+      <input id="owner">
+      <input id="repo">
+      <input id="branch">
+      <input id="pat">
+    </div>
 
-  <button id="publish" style="background:#caa164;color:#081126;padding:10px;border-radius:8px;margin-top:18px">Publish All to GitHub</button>
-  <div id="status" style="margin-top:10px;color:#9fb0bd"></div>
-</div>
+    <!-- category + global weight -->
+    <div class="flex" style="margin:10px 0">
+      <div>
+        <label class="small">Category</label><br>
+        <select id="cat" style="padding:8px;border-radius:6px">
+          <option>bangles</option><option>bracelet</option><option>chain</option><option>chandraharalu</option><option>earring</option><option>kada</option><option>locket</option><option>necklace</option><option>npchains</option><option>ring</option>
+        </select>
+      </div>
 
-<!-- PAT popup (hidden unless needed) -->
-<div id="patModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center">
-  <div style="background:#0b0c0e;padding:18px;border-radius:10px;max-width:420px;width:90%">
-    <div style="color:#caa164;font-weight:700;margin-bottom:8px">Enter GitHub Token</div>
-    <div style="color:#9fb0bd;margin-bottom:10px">This token is stored only for this browser session.</div>
-    <input id="patInput" type="password" placeholder="GitHub Personal Access Token" style="width:100%;padding:8px;margin-bottom:10px"/>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button id="patCancel" style="background:#222;padding:8px;border-radius:8px;color:#eaf2f8">Cancel</button>
-      <button id="patSave" style="background:#caa164;padding:8px;border-radius:8px;color:#081126">Save & Continue</button>
+      <div>
+        <label class="small">Global Weight (optional)</label><br>
+        <input id="globalWeight" type="number" step="0.001" placeholder="g" style="padding:8px;border-radius:6px;width:140px">
+      </div>
+
+      <div style="margin-left:auto">
+        <button id="openManage" class="btn-primary">Open Manage Items</button>
+      </div>
+    </div>
+
+    <!-- drag & drop + file input -->
+    <div id="drop" class="file-drop">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-weight:700;color:#eaf2f8">Drag & drop images here</div>
+          <div class="muted" style="margin-top:6px">or click to browse. Filenames will be used as IDs (no extension).</div>
+        </div>
+        <div>
+          <button id="browseBtn" class="btn-primary">Browse</button>
+        </div>
+      </div>
+      <input id="files" type="file" multiple accept="image/*" style="display:none">
+    </div>
+
+    <div id="preview" class="preview" aria-live="polite"></div>
+
+    <div style="margin-top:14px; display:flex; gap:12px; align-items:center">
+      <button id="publish" class="btn-primary">Publish All to GitHub</button>
+      <div id="status" class="muted">No files selected</div>
     </div>
   </div>
-</div>
 
-<script>
-// admin check
-if(sessionStorage.getItem('slns_admin')!=='true') window.location.href='/dashboard/';
+  <!-- PAT modal (session only) -->
+  <div id="patModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center">
+    <div style="background:#0b0c0e;padding:20px;border-radius:10px;max-width:480px;width:94%">
+      <h3 style="color:#caa164;margin:0 0 8px 0">Enter GitHub Token (session)</h3>
+      <p class="muted">This token is stored only for this browser session. It is required to upload images and update items.json.</p>
+      <input id="patInput" type="password" placeholder="Paste GitHub PAT here" style="width:100%;padding:10px;border-radius:6px;background:#061018;border:1px solid #162225;color:#eaf2f8">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button id="patCancel" class="small" style="background:#222;padding:8px;border-radius:6px">Cancel</button>
+        <button id="patSave" class="btn-primary">Save & Continue</button>
+      </div>
+    </div>
+  </div>
 
-// autoload owner/repo/branch
-const ownerEl = document.getElementById('owner');
-const repoEl = document.getElementById('repo');
-const branchEl = document.getElementById('branch');
-ownerEl.value = localStorage.getItem('github_owner') || 'slnsjewellers22-bot';
-repoEl.value = localStorage.getItem('github_repo') || 'slns-digital-catalogue';
-branchEl.value = localStorage.getItem('github_branch') || 'main';
-[ownerEl, repoEl, branchEl].forEach(i=>i.addEventListener('input',()=>localStorage.setItem('github_'+i.id, i.value.trim())));
+  <!-- include shared GitHub helper -->
+  <script src="admin.js"></script>
 
-// session-only PAT
-const patEl = document.getElementById('pat');
-patEl.value = sessionStorage.getItem('github_pat') || '';
+  <script>
+  // --- page init & saved settings ---
+  if(sessionStorage.getItem('slns_admin')!=='true') location.href='/dashboard/';
+  const ownerEl = document.getElementById('owner');
+  const repoEl  = document.getElementById('repo');
+  const branchEl = document.getElementById('branch');
+  const patHidden = document.getElementById('pat');
 
-// preview logic
-const filesInput = document.getElementById('files');
-const preview = document.getElementById('preview');
-let selectedFiles = [];
-filesInput.addEventListener('change', e=>{
-  selectedFiles = Array.from(e.target.files);
-  preview.innerHTML = '';
-  selectedFiles.forEach((f, idx)=>{
-    const box = document.createElement('div'); box.style.width='150px'; box.style.padding='10px'; box.style.background='#071018'; box.style.borderRadius='8px';
-    const img = document.createElement('img'); img.src = URL.createObjectURL(f); img.style.width='100%'; img.style.height='110px'; img.style.objectFit='cover';
-    const name = document.createElement('div'); name.textContent = f.name; name.style.color='#eaf2f8'; name.style.fontSize='12px'; name.style.marginTop='6px';
-    const w = document.createElement('input'); w.type='number'; w.step='0.001'; w.placeholder='weight (g)'; w.style.width='100%'; w.style.marginTop='8px'; w.className='imgWeight';
-    box.appendChild(img); box.appendChild(name); box.appendChild(w);
-    preview.appendChild(box);
+  ownerEl.value = localStorage.getItem('github_owner') || 'slnsjewellers22-bot';
+  repoEl.value  = localStorage.getItem('github_repo') || 'slns-digital-catalogue';
+  branchEl.value = localStorage.getItem('github_branch') || 'main';
+
+  [ownerEl, repoEl, branchEl].forEach(i=>i.addEventListener('input', ()=>localStorage.setItem('github_'+i.id, i.value.trim())));
+
+  // session-only PAT
+  patHidden.value = sessionStorage.getItem('github_pat') || '';
+  document.getElementById('patInput').value = '';
+
+  // drag & drop
+  const drop = document.getElementById('drop');
+  const filesInput = document.getElementById('files');
+  const browseBtn = document.getElementById('browseBtn');
+  const preview = document.getElementById('preview');
+  const status = document.getElementById('status');
+  const publishBtn = document.getElementById('publish');
+  const patModal = document.getElementById('patModal');
+  const patInput = document.getElementById('patInput');
+
+  let selectedFiles = [];
+
+  drop.addEventListener('click', ()=>filesInput.click());
+  browseBtn.addEventListener('click', ()=>filesInput.click());
+
+  drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.style.borderColor='#3b6b54'; });
+  drop.addEventListener('dragleave', e=>{ drop.style.borderColor='#162225'; });
+  drop.addEventListener('drop', e=> {
+    e.preventDefault();
+    drop.style.borderColor='#162225';
+    const dt = e.dataTransfer;
+    if(!dt) return;
+    const files = Array.from(dt.files).filter(f=>f.type.startsWith('image/'));
+    handleFiles(files);
   });
-});
 
-// PAT modal
-const patModal = document.getElementById('patModal');
-const patInput = document.getElementById('patInput');
-document.getElementById('patCancel').addEventListener('click', ()=>{ patModal.style.display='none'; });
-document.getElementById('patSave').addEventListener('click', ()=>{ 
-  const v = patInput.value.trim();
-  if(!v){ alert('Enter token'); return; }
-  sessionStorage.setItem('github_pat', v);
-  patEl.value = v;
-  patModal.style.display='none';
-});
+  filesInput.addEventListener('change', e=> {
+    handleFiles(Array.from(e.target.files).filter(f=>f.type.startsWith('image/')));
+    filesInput.value = '';
+  });
 
-function ensurePAT(){
-  const v = sessionStorage.getItem('github_pat');
-  if(!v){
+  function handleFiles(files){
+    if(!files||files.length===0) return;
+    selectedFiles = selectedFiles.concat(files);
+    renderPreview();
+    status.textContent = selectedFiles.length + ' file(s) ready';
+  }
+
+  function renderPreview(){
+    preview.innerHTML = '';
+    selectedFiles.forEach((f, idx)=>{
+      const box = document.createElement('div'); box.className='box';
+      const img = document.createElement('img'); img.src = URL.createObjectURL(f);
+      const name = document.createElement('div'); name.textContent = f.name; name.className='small'; name.style.marginTop='6px';
+      const weight = document.createElement('input'); weight.type='number'; weight.step='0.001'; weight.placeholder='weight (g)'; weight.style.width='100%'; weight.style.marginTop='6px'; weight.className='imgWeight';
+      const remove = document.createElement('button'); remove.textContent='Remove'; remove.className='small'; remove.style.marginTop='6px';
+      remove.addEventListener('click', ()=>{ selectedFiles.splice(idx,1); renderPreview(); status.textContent = selectedFiles.length + ' file(s) ready'; });
+      box.appendChild(img); box.appendChild(name); box.appendChild(weight); box.appendChild(remove);
+      preview.appendChild(box);
+    });
+  }
+
+  // PAT modal handlers
+  document.getElementById('patCancel').addEventListener('click', ()=>{ patModal.style.display='none'; });
+  document.getElementById('patSave').addEventListener('click', ()=> {
+    const v = patInput.value.trim();
+    if(!v){ alert('Please paste token'); return; }
+    sessionStorage.setItem('github_pat', v);
+    patHidden.value = v;
+    patModal.style.display='none';
+    patInput.value='';
+    publishAll(); // if publish was triggered, continue automatically
+  });
+
+  // ensure PAT: show modal if missing, return true when ready
+  function ensurePATInteractive(){
+    const p = sessionStorage.getItem('github_pat');
+    if(p) { patHidden.value = p; return true; }
     patModal.style.display = 'flex';
     patInput.value = '';
     patInput.focus();
     return false;
   }
-  patEl.value = v;
-  return true;
-}
 
-// publish
-async function publishToGitHub(){
-  // ensure PAT
-  if(!ensurePAT()) return;
-  const owner = ownerEl.value.trim();
-  const repo = repoEl.value.trim();
-  const branch = branchEl.value.trim() || 'main';
-  const pat = sessionStorage.getItem('github_pat');
-  if(!pat){ alert('PAT missing'); return; }
-  if(selectedFiles.length===0){ alert('Choose images'); return; }
-  const cat = document.getElementById('cat').value;
-  const globalW = parseFloat(document.getElementById('globalWeight').value)||0;
-  document.getElementById('status').textContent = 'Uploading...';
-  // load items.json
-  let items = [];
-  try{
-    const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/items.json?${Date.now()}`);
-    if(r.ok) items = await r.json();
-  }catch(e){ items = []; }
-  const weights = Array.from(document.getElementsByClassName('imgWeight'));
-  for(let i=0;i<selectedFiles.length;i++){
-    const f = selectedFiles[i];
-    const perW = parseFloat(weights[i].value) || globalW;
-    const id = f.name.replace(/\.[^/.]+$/,'');
-    const path = `images/${id}.jpg`;
-    const b64 = await toBase64(f);
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
-    const body = { message:`Add ${path}`, content:b64.split(',')[1], branch };
-    const res = await fetch(url, { method:'PUT', headers:{ Authorization:'token '+pat, Accept:'application/vnd.github.v3+json' }, body: JSON.stringify(body) });
-    const data = await res.json();
-    if(res.status===201||res.status===200){
-      items.push({ id, name: id.replace(/_/g,' '), metal:'gold', category:cat, weight: perW, imageURL:`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`, timestamp: Date.now() });
-      document.getElementById('status').textContent = `Uploaded ${f.name}`;
-    } else {
-      console.error('GitHub upload error', data);
-      alert(`Upload failed for ${f.name}: ${data.message||JSON.stringify(data)}`);
+  // Publish flow
+  publishBtn.addEventListener('click', ()=> {
+    // ensure saved github owner/repo/branch
+    localStorage.setItem('github_owner', ownerEl.value.trim());
+    localStorage.setItem('github_repo', repoEl.value.trim());
+    localStorage.setItem('github_branch', branchEl.value.trim() || 'main');
+    if(!ensurePATInteractive()) return;
+    publishAll();
+  });
+
+  async function publishAll(){
+    publishBtn.disabled = true;
+    publishBtn.textContent = 'Uploading...';
+
+    const owner = ownerEl.value.trim();
+    const repo = repoEl.value.trim();
+    const branch = branchEl.value.trim() || 'main';
+    const pat = sessionStorage.getItem('github_pat');
+
+    if(selectedFiles.length===0){ alert('Choose images'); publishBtn.disabled=false; publishBtn.textContent='Publish All to GitHub'; return; }
+
+    // 1) ensure there is no stray "images" file (file that conflicts with folder)
+    try {
+      const meta = await window.GH.getPathMeta(owner, repo, 'images', branch, pat);
+      if(meta && meta.type === 'file'){
+        // delete that file so folder can be created
+        if(!confirm('An existing file named "images" exists in the repo (conflicts with folder). Delete it automatically?')) {
+          publishBtn.disabled=false; publishBtn.textContent='Publish All to GitHub'; return;
+        }
+        await window.GH.deleteFile(owner, repo, 'images', `Remove conflicting file images`, branch, pat);
+      }
+    } catch(e){
+      // ignore - path not found or permission errors will surface later
     }
-  }
-  // update items.json
-  const pathItems = 'items.json';
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(items, null, 2))));
-  const urlItems = `https://api.github.com/repos/${owner}/${repo}/contents/${pathItems}`;
-  const bodyItems = { message:'Update items.json', content: encoded, branch };
-  const res2 = await fetch(urlItems, { method:'PUT', headers:{ Authorization:'token '+pat, Accept:'application/vnd.github.v3+json'}, body: JSON.stringify(bodyItems) });
-  const data2 = await res2.json();
-  if(res2.status===200||res2.status===201){
-    document.getElementById('status').textContent = '✔ Upload complete';
-  } else {
-    console.error('items.json error', data2);
-    alert('Failed to update items.json: ' + (data2.message||JSON.stringify(data2)));
-  }
-}
 
-function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=err=>rej(err); r.readAsDataURL(file); }); }
+    // 2) load existing items.json (to append)
+    let items = [];
+    try {
+      items = await window.GH.fetchItems(owner, repo, branch);
+      if(!Array.isArray(items)) items = [];
+    } catch(e){
+      items = [];
+    }
 
-document.getElementById('publish').addEventListener('click', publishToGitHub);
-</script>
+    // 3) upload files (handle create and update with sha)
+    const imgWeights = Array.from(document.getElementsByClassName('imgWeight'));
+    for(let i=0;i<selectedFiles.length;i++){
+      const file = selectedFiles[i];
+      const perW = parseFloat(imgWeights[i].value) || parseFloat(document.getElementById('globalWeight').value) || 0;
+      const id = file.name.replace(/\.[^/.]+$/,'');
+      const path = `images/${id}.jpg`;
+      try {
+        const result = await window.GH.uploadFile(owner, repo, path, file, branch, pat);
+        // success
+        const raw = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
+        items.push({
+          id,
+          name: id.replace(/_/g,' '),
+          metal:'gold',
+          category: document.getElementById('cat').value,
+          weight: perW,
+          imageURL: raw,
+          timestamp: Date.now()
+        });
+        status.textContent = `Uploaded ${file.name}`;
+      } catch(err){
+        console.error('upload error', err);
+        alert(`Upload failed for ${file.name}: ${err.message || err}`);
+      }
+    }
+
+    // 4) update items.json (use sha if exists)
+    try {
+      await window.GH.updateItemsJson(owner, repo, branch, items, 'Update items.json (upload)', pat);
+      status.textContent = 'All uploaded and items.json updated';
+      // clear selected files
+      selectedFiles = [];
+      renderPreview();
+    } catch(err){
+      console.error('items.json update failed', err);
+      alert('Failed to update items.json: ' + (err.message || JSON.stringify(err)));
+    }
+
+    publishBtn.disabled = false;
+    publishBtn.textContent = 'Publish All to GitHub';
+  }
+
+  // quick link to manage page
+  document.getElementById('openManage').addEventListener('click', ()=> location.href='/dashboard/manage.html');
+  </script>
 </body>
 </html>
