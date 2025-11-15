@@ -3,268 +3,73 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SLNS Upload</title>
+<title>SLNS Dashboard</title>
 <link rel="stylesheet" href="/style.css">
 </head>
-
-<body style="background:#07080a;color:#eaf2f8;padding:20px">
-
-<!-- MAIN CARD -->
-<div style="
-  max-width:980px;
-  margin:20px auto;
-  background:linear-gradient(180deg,#0b0c0e,#0f1215);
-  padding:18px;
-  border-radius:12px">
-
-  <h2 style="color:#caa164">Upload New Items</h2>
-
-  <!-- HIDDEN GITHUB SETTINGS -->
-  <div id="ghHidden" style="display:none">
-    <input id="owner">
-    <input id="repo">
-    <input id="branch">
-    <input id="pat">
+<body>
+  <div class="topbar" style="background:#0c0f13;padding:14px 20px;display:flex;justify-content:space-between;align-items:center">
+    <div style="color:#caa164;font-weight:700">SLNS Admin Panel</div>
+    <div style="display:flex;gap:8px">
+      <a href="/dashboard/upload.html" style="background:#caa164;color:#081126;padding:8px 12px;border-radius:8px;text-decoration:none">Upload</a>
+      <a href="/dashboard/manage.html" style="background:#caa164;color:#081126;padding:8px 12px;border-radius:8px;text-decoration:none">Manage Items</a>
+      <button id="logout" style="background:#111;border:1px solid #2a2f33;color:#eaf2f8;padding:8px 12px;border-radius:8px">Logout</button>
+    </div>
   </div>
 
-  <!-- CATEGORY + GLOBAL WEIGHT -->
-  <div style="margin:14px 0">
-    <label>Category</label>
-    <select id="cat">
-      <option>bangles</option>
-      <option>bracelet</option>
-      <option>chain</option>
-      <option>chandraharalu</option>
-      <option>earring</option>
-      <option>kada</option>
-      <option>locket</option>
-      <option>necklace</option>
-      <option>npchains</option>
-      <option>ring</option>
-    </select>
+  <main style="max-width:1100px;margin:24px auto;padding:0 16px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+      <div style="background:#0b0e12;padding:18px;border-radius:10px;border:1px solid #14171c">
+        <div style="color:#9fb0bd">Total Items</div>
+        <div id="totalItems" style="font-size:28px;font-weight:700;color:#caa164;margin-top:8px">0</div>
+      </div>
+      <div style="background:#0b0e12;padding:18px;border-radius:10px;border:1px solid #14171c">
+        <div style="color:#9fb0bd">Total Weight</div>
+        <div id="totalWeight" style="font-size:28px;font-weight:700;color:#caa164;margin-top:8px">0 g</div>
+      </div>
+      <div style="background:#0b0e12;padding:18px;border-radius:10px;border:1px solid #14171c">
+        <div style="color:#9fb0bd">Last Updated</div>
+        <div id="lastUpdated" style="font-size:20px;font-weight:700;color:#caa164;margin-top:8px">--</div>
+      </div>
+    </div>
 
-    <label style="margin-left:14px">Global Weight (optional)</label>
-    <input id="globalWeight" type="number" step="0.001" style="width:120px">
-  </div>
+    <div style="margin-top:20px">
+      <button id="refreshBtn" style="background:#caa164;border:none;padding:10px 14px;border-radius:8px;color:#081126;font-weight:700">Refresh</button>
+    </div>
 
-  <!-- FILE UPLOAD -->
-  <input id="files" type="file" multiple accept="image/*"
-    style="margin-top:15px">
-
-  <!-- PREVIEW GRID -->
-  <div id="preview"
-    style="display:flex;flex-wrap:wrap;gap:12px;margin-top:15px"></div>
-
-  <!-- PUBLISH BUTTON -->
-  <button id="publish"
-    style="background:#caa164;color:#081126;padding:10px;border-radius:8px;margin-top:18px">
-      Publish All to GitHub
-  </button>
-
-  <!-- STATUS -->
-  <div id="status" style="margin-top:12px;color:#9fb0bd"></div>
-</div>
+    <h3 style="color:#caa164;margin-top:30px">Recent Uploads</h3>
+    <div id="recentList" style="background:#0b0e12;padding:12px;border-radius:10px;border:1px solid #14171c;margin-top:10px;max-height:360px;overflow:auto"></div>
+  </main>
 
 <script>
-// =====================================================================
-// ADMIN CHECK
-// =====================================================================
-if (sessionStorage.getItem('slns_admin') !== 'true') {
-  window.location.href = '/dashboard/';
-}
+if(sessionStorage.getItem('slns_admin')!=='true'){ window.location.href='/dashboard/'; }
 
-// =====================================================================
-// AUTO-SAVED GITHUB SETTINGS (HIDDEN FIELDS)
-// =====================================================================
-const ownerEl  = document.getElementById("owner");
-const repoEl   = document.getElementById("repo");
-const branchEl = document.getElementById("branch");
-const patEl    = document.getElementById("pat");
+const owner = localStorage.getItem('github_owner') || 'slnsjewellers22-bot';
+const repo = localStorage.getItem('github_repo') || 'slns-digital-catalogue';
+const branch = localStorage.getItem('github_branch') || 'main';
 
-// load saved or default
-ownerEl.value  = localStorage.getItem("github_owner")  || "slnsjewellers22-bot";
-repoEl.value   = localStorage.getItem("github_repo")   || "slns-digital-catalogue";
-branchEl.value = localStorage.getItem("github_branch") || "main";
-
-// auto-save on change
-[ownerEl, repoEl, branchEl].forEach(input => {
-  input.addEventListener("input", () => {
-    localStorage.setItem("github_" + input.id, input.value.trim());
-  });
-});
-
-// PAT ONLY IN SESSION (safe)
-patEl.value = sessionStorage.getItem("github_pat") || "";
-patEl.addEventListener("input", ()=> {
-  sessionStorage.setItem("github_pat", patEl.value.trim());
-});
-
-// =====================================================================
-// PREVIEW + PER-IMAGE WEIGHT BOXES
-// =====================================================================
-const filesInput = document.getElementById("files");
-const preview = document.getElementById("preview");
-
-let selectedFiles = [];
-
-filesInput.addEventListener("change", e => {
-  selectedFiles = Array.from(e.target.files);
-  preview.innerHTML = "";
-
-  selectedFiles.forEach(f => {
-    const box = document.createElement("div");
-    box.style.width = "150px";
-    box.style.padding = "10px";
-    box.style.background = "#071018";
-    box.style.borderRadius = "8px";
-
-    const img = document.createElement("img");
-    img.src = URL.createObjectURL(f);
-    img.style.width = "100%";
-    img.style.height = "110px";
-    img.style.objectFit = "cover";
-
-    const name = document.createElement("div");
-    name.textContent = f.name;
-    name.style.color = "#eaf2f8";
-    name.style.fontSize = "12px";
-    name.style.marginTop = "5px";
-
-    const w = document.createElement("input");
-    w.type = "number";
-    w.step = "0.001";
-    w.placeholder = "weight";
-    w.style.width = "100%";
-    w.style.marginTop = "8px";
-    w.className = "imgWeight";
-
-    box.appendChild(img);
-    box.appendChild(name);
-    box.appendChild(w);
-    preview.appendChild(box);
-  });
-});
-
-// =====================================================================
-// UPLOAD
-// =====================================================================
-async function publishToGitHub() {
-
-  const owner  = ownerEl.value.trim();
-  const repo   = repoEl.value.trim();
-  const branch = branchEl.value.trim() || "main";
-  const pat    = patEl.value.trim();
-
-  if (!pat) return alert("PAT missing (session only)");
-
-  if (selectedFiles.length === 0) {
-    return alert("Choose images");
-  }
-
-  const cat    = document.getElementById("cat").value;
-  const globalW = parseFloat(document.getElementById("globalWeight").value) || 0;
-
-  const status = document.getElementById("status");
-  status.textContent = "Uploading...";
-
-  // ========== LOAD EXISTING items.json ==========
-  let items = [];
-  try {
-    const resp = await fetch(
-      `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/items.json?${Date.now()}`
-    );
-    if (resp.ok) items = await resp.json();
-  } catch(e){
-    items = [];
-  }
-
-  const weightInputs = Array.from(document.getElementsByClassName("imgWeight"));
-
-  // ========== UPLOAD EACH IMAGE ==========
-  for (let i = 0; i < selectedFiles.length; i++) {
-    const f = selectedFiles[i];
-    const perWeight = parseFloat(weightInputs[i].value) || globalW;
-
-    const id = f.name.replace(/\.[^/.]+$/, "");
-    const path = `images/${id}.jpg`;
-
-    const base64 = await fileToBase64(f);
-
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    const body = {
-      message: `Add ${path}`,
-      content: base64.split(",")[1],
-      branch
-    };
-
-    const res = await fetch(url, {
-      method: "PUT",
-      headers: {
-        Authorization: "token " + pat,
-        Accept: "application/vnd.github.v3+json"
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (res.status !== 201 && res.status !== 200) {
-      alert("Upload failed for " + f.name);
-      continue;
-    }
-
-    // add metadata
-    items.push({
-      id,
-      name: id.replace(/_/g, " "),
-      metal: "gold",
-      category: cat,
-      weight: perWeight,
-      imageURL: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`,
-      timestamp: Date.now()
-    });
-
-    status.textContent = `Uploaded ${f.name}`;
-  }
-
-  // ========== UPDATE items.json ==========
-  const itemsPath = "items.json";
-  const encoded = btoa(
-    unescape(encodeURIComponent(JSON.stringify(items, null, 2)))
-  );
-
-  const url2 = `https://api.github.com/repos/${owner}/${repo}/contents/${itemsPath}`;
-  const body2 = {
-    message: "Update items.json",
-    content: encoded,
-    branch
-  };
-
-  const res2 = await fetch(url2, {
-    method: "PUT",
-    headers: {
-      Authorization: "token " + pat,
-      Accept: "application/vnd.github.v3+json"
-    },
-    body: JSON.stringify(body2)
-  });
-
-  if (res2.status === 200 || res2.status === 201) {
-    status.textContent = "✔ Upload complete!";
-  } else {
-    alert("Failed updating items.json");
+async function loadStats(){
+  const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/items.json?${Date.now()}`;
+  try{
+    const r = await fetch(url);
+    if(!r.ok) throw 'no items';
+    const items = await r.json();
+    document.getElementById('totalItems').textContent = items.length;
+    const totalW = items.reduce((s,i)=> s + (parseFloat(i.weight)||0), 0);
+    document.getElementById('totalWeight').textContent = totalW.toFixed(3) + ' g';
+    const last = items.reduce((m,i)=> i.timestamp && i.timestamp>m ? i.timestamp : m, 0);
+    document.getElementById('lastUpdated').textContent = last ? new Date(last).toLocaleString() : '--';
+    const recent = items.slice(-20).reverse();
+    const recentList = document.getElementById('recentList');
+    recentList.innerHTML = recent.map(it=>`<div style="padding:8px;border-bottom:1px solid #14171c"><strong style="color:#caa164">${it.name}</strong><div style="color:#9fb0bd">Category: ${it.category} • ${it.weight?it.weight+' g':''} • ${it.timestamp? new Date(it.timestamp).toLocaleString():''}</div></div>`).join('');
+  }catch(e){
+    document.getElementById('recentList').innerHTML = '<div style="color:#9fb0bd">No data found (items.json missing)</div>';
   }
 }
 
-document.getElementById("publish").addEventListener("click", publishToGitHub);
+document.getElementById('refreshBtn').addEventListener('click', loadStats);
+document.getElementById('logout').addEventListener('click', ()=>{ sessionStorage.removeItem('slns_admin'); window.location.href='/dashboard/'; });
 
-function fileToBase64(file){
-  return new Promise((res,rej)=>{
-    const r = new FileReader();
-    r.onload=()=>res(r.result);
-    r.onerror=err=>rej(err);
-    r.readAsDataURL(file);
-  });
-}
+loadStats();
 </script>
-
 </body>
 </html>
