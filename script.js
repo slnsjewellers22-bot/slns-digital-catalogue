@@ -1,47 +1,35 @@
-/* -----------------------------------------------------
-   SLNS DIGITAL CATALOGUE — V6.4 (Modal Fix Version)
-   ✔ No auto-open modal
-   ✔ Close, Next, Prev fixed
-   ✔ Matches your original UI
------------------------------------------------------ */
-
-/* CONFIG */
+/* ===========================
+   CONFIG
+=========================== */
 const metals = ["gold"];
 const types = [
   "bangles", "bracelet", "chain", "chandraharalu",
-  "earring", "kada", "locket", "necklace", "npchains", "ring"
+  "earring", "kada", "locket", "necklace",
+  "npchains", "ring"
 ];
-const maxImages = 100;
+const maxImages = 200;
 const imagesPath = "images";
 const weightsFile = "weights.json";
 const SLIDER_MAX = 250;
-const itemsPerPage = 12;
 
-/* DOM ELEMENTS */
+/* ===========================
+   DOM
+=========================== */
 const gallery = document.getElementById("gallery");
 const searchBox = document.getElementById("searchBox");
+const filterBar = document.querySelector(".filter-bar");
+const menuToggle = document.getElementById("menuToggle");
 
+const catSelectAll = document.getElementById("catSelectAll");
 const weightFromInput = document.getElementById("weightFrom");
 const weightToInput = document.getElementById("weightTo");
 const rangeMin = document.getElementById("rangeMin");
 const rangeMax = document.getElementById("rangeMax");
 
 const clearFiltersBtn = document.getElementById("clearFilters");
-const applyFiltersBtn = document.getElementById("applyFilters");
-const homeBtn = document.getElementById("homeBtn");
-const catWrap = document.getElementById("categoriesWrap");
-const catSelectAll = document.getElementById("catSelectAll");
-const paginationEl = document.getElementById("pagination");
-const noImages = document.getElementById("noImages");
-const yearEl = document.getElementById("year");
-const adminBtn = document.getElementById("adminBtn");
-adminBtn.onclick = () => {
-    window.location.href = "/dashboard/index.html";
-};
 
-
-/* MODAL */
-const modal = document.getElementById("modal");
+/* Modal Elements */
+const modalOverlay = document.getElementById("overlayModal");
 const modalImg = document.getElementById("modalImg");
 const modalInfo = document.getElementById("modalInfo");
 const modalClose = document.getElementById("modalClose");
@@ -49,15 +37,18 @@ const modalPrev = document.getElementById("modalPrev");
 const modalNext = document.getElementById("modalNext");
 const orderBtn = document.getElementById("orderBtn");
 
-/* STATE */
+/* ===========================
+   STATE
+=========================== */
 let allItems = [];
 let viewList = [];
 let validViewList = [];
 let weights = {};
-let currentIndex = -1;
-let currentPage = 1;
+let currentIndex = 0;
 
-/* BUILD MASTER ITEM LIST */
+/* ===========================
+   BUILD IMAGE LIST
+=========================== */
 (function () {
   for (const m of metals) {
     for (const t of types) {
@@ -68,151 +59,120 @@ let currentPage = 1;
           src: `${imagesPath}/${id}.jpg`,
           name: `${capitalize(m)} ${capitalize(t)} ${i}`,
           metal: m,
-          type: t,
+          type: t
         });
       }
     }
   }
 })();
 
-function capitalize(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+function capitalize(x) {
+  return x[0].toUpperCase() + x.slice(1);
 }
 
-/* LOAD WEIGHTS */
+/* ===========================
+   LOAD WEIGHTS
+=========================== */
 fetch(weightsFile)
-  .then((r) => r.json())
-  .then((data) => {
-    Object.keys(data).forEach((k) => {
-      weights[k.toLowerCase()] = data[k];
-    });
+  .then(r => r.json())
+  .then(w => {
+    Object.keys(w).forEach(k => weights[k.toLowerCase()] = w[k]);
   })
-  .catch(() => {})
   .finally(() => {
-    initUI();
+    initFilters();
     render();
   });
 
-/* INIT UI */
-function initUI() {
-  yearEl.textContent = new Date().getFullYear();
+/* ===========================
+   INIT FILTERS
+=========================== */
+function initFilters() {
 
-  /* Build category checkboxes */
-  catWrap.innerHTML = "";
-  types.forEach((t) => {
-    const lbl = document.createElement("label");
-    lbl.innerHTML =
-      `<input type="checkbox" class="filter-type" value="${t}" checked> ${capitalize(t)}`;
-    catWrap.appendChild(lbl);
+  // Toggle Filter Panel
+  menuToggle.onclick = () => {
+    filterBar.classList.toggle("show");
+  };
+
+  document.addEventListener("click", (e) => {
+    if (!filterBar.contains(e.target) && e.target !== menuToggle) {
+      filterBar.classList.remove("show");
+    }
   });
 
-  /* Category select all */
-  catSelectAll.addEventListener("change", () => {
-    document.querySelectorAll(".filter-type").forEach((cb) => {
-      cb.checked = catSelectAll.checked;
-    });
-  });
+  // Search
+  searchBox.oninput = debounce(render, 200);
 
-  catWrap.addEventListener("change", () => {
-    const allChecked = [...document.querySelectorAll(".filter-type")].every(
-      (cb) => cb.checked
-    );
-    catSelectAll.checked = allChecked;
-  });
+  // Clear
+  document.getElementById("clearFilters").onclick = resetFilters;
 
-  /* Search */
-  searchBox.addEventListener(
-    "input",
-    debounce(() => {
-      currentPage = 1;
-      render();
-    }, 150)
-  );
+  // Weight slider
+  weightFromInput.oninput = syncInputs;
+  weightToInput.oninput = syncInputs;
 
-  clearFiltersBtn.addEventListener("click", resetFilters);
-  applyFiltersBtn.addEventListener("click", () => {
-    currentPage = 1;
-    render();
-  });
-  homeBtn.addEventListener("click", resetFilters);
-
-  /* Weight Inputs */
-  rangeMin.value = 0;
-  rangeMax.value = SLIDER_MAX;
-
-  rangeMin.addEventListener("input", () => {
+  rangeMin.oninput = () => {
     if (+rangeMin.value > +rangeMax.value) rangeMax.value = rangeMin.value;
-    weightFromInput.value = rangeMin.value;
-  });
+    weightFromInput.value = round3(rangeMin.value);
+    render();
+  };
 
-  rangeMax.addEventListener("input", () => {
+  rangeMax.oninput = () => {
     if (+rangeMax.value < +rangeMin.value) rangeMin.value = rangeMax.value;
-    weightToInput.value = rangeMax.value;
-  });
+    weightToInput.value = round3(rangeMax.value);
+    render();
+  };
 
-  weightFromInput.addEventListener("input", () => {
-    rangeMin.value = clamp(weightFromInput.value || 0, 0, SLIDER_MAX);
-  });
-
-  weightToInput.addEventListener("input", () => {
-    rangeMax.value = clamp(weightToInput.value || 0, 0, SLIDER_MAX);
-  });
-
-  /* Modal Events */
+  // Modal actions
   modalClose.onclick = closeModal;
   modalPrev.onclick = () => showModal(-1);
   modalNext.onclick = () => showModal(1);
 
-  /* ESC Key */
-  document.addEventListener("keydown", (e) => {
-    if (modal.hidden) return;
+  document.onkeydown = (e) => {
     if (e.key === "Escape") closeModal();
-    if (e.key === "ArrowLeft") showModal(-1);
-    if (e.key === "ArrowRight") showModal(1);
-  });
-
-  /* Click outside modal closes */
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
-  });
+    if (modalOverlay.hidden === false) {
+      if (e.key === "ArrowLeft") showModal(-1);
+      if (e.key === "ArrowRight") showModal(1);
+    }
+  };
 }
 
-/* RESET FILTERS */
+/* ===========================
+   RESET FILTERS
+=========================== */
 function resetFilters() {
-  document.querySelectorAll(".filter-type").forEach((cb) => (cb.checked = true));
-  catSelectAll.checked = true;
-
   searchBox.value = "";
   weightFromInput.value = "";
   weightToInput.value = "";
-
   rangeMin.value = 0;
   rangeMax.value = SLIDER_MAX;
-
-  currentPage = 1;
   render();
 }
 
-/* MAIN RENDER */
+/* ===========================
+   SYNC
+=========================== */
+function syncInputs() {
+  if (weightFromInput.value) rangeMin.value = clamp(+weightFromInput.value, 0, SLIDER_MAX);
+  if (weightToInput.value) rangeMax.value = clamp(+weightToInput.value, 0, SLIDER_MAX);
+  render();
+}
+
+/* ===========================
+   RENDER
+=========================== */
 function render() {
   const q = searchBox.value.toLowerCase();
-  const selectedCats = [
-    ...document.querySelectorAll(".filter-type:checked"),
-  ].map((x) => x.value);
-
   const minW = parseFloat(weightFromInput.value);
   const maxW = parseFloat(weightToInput.value);
-  const weightActive = !!weightFromInput.value || !!weightToInput.value;
+  const weightActive = weightFromInput.value || weightToInput.value;
 
-  viewList = allItems.filter((it) => {
-    if (!selectedCats.includes(it.type)) return false;
-
-    if (q && !it.id.toLowerCase().includes(q)) return false;
+  viewList = allItems.filter(it => {
+    if (q && !(it.id.toLowerCase().includes(q) || it.name.toLowerCase().includes(q)))
+      return false;
 
     const w = weights[it.id.toLowerCase()];
     if (weightActive) {
       if (w === undefined) return false;
-      if (!(w >= (minW || 0) && w <= (maxW || SLIDER_MAX))) return false;
+      if (!(w >= minW && w <= maxW)) return false;
     }
 
     return true;
@@ -221,7 +181,9 @@ function render() {
   checkImagesExist();
 }
 
-/* CHECK IMAGE EXISTENCE */
+/* ===========================
+   SHOW ONLY EXISTING IMAGES
+=========================== */
 function checkImagesExist() {
   validViewList = [];
   let pending = viewList.length;
@@ -231,7 +193,7 @@ function checkImagesExist() {
     return;
   }
 
-  viewList.forEach((item) => {
+  viewList.forEach(item => {
     const img = new Image();
     img.src = item.src;
 
@@ -246,130 +208,89 @@ function checkImagesExist() {
   });
 }
 
-/* UPDATE GALLERY */
+/* ===========================
+   UPDATE GALLERY
+=========================== */
 function updateGallery() {
   gallery.innerHTML = "";
+  const noI = document.getElementById("noImages");
 
   if (validViewList.length === 0) {
-    noImages.hidden = false;
-    paginationEl.innerHTML = "";
+    noI.hidden = false;
     return;
   }
 
-  noImages.hidden = true;
+  noI.hidden = true;
 
-  const total = validViewList.length;
-  const totalPages = Math.ceil(total / itemsPerPage);
-  currentPage = clamp(currentPage, 1, totalPages);
-
-  const start = (currentPage - 1) * itemsPerPage;
-  const items = validViewList.slice(start, start + itemsPerPage);
-
-  items.forEach((item, idx) => {
+  validViewList.forEach((item, idx) => {
     const card = document.createElement("div");
-    card.classList.add("card");
+    card.className = "card";
 
     const img = document.createElement("img");
     img.src = item.src;
 
     const name = document.createElement("div");
-    name.classList.add("name");
+    name.className = "name";
     name.textContent = item.name;
 
-    const wDiv = document.createElement("div");
-    wDiv.classList.add("weight");
     const w = weights[item.id.toLowerCase()];
-    wDiv.textContent = w ? `${w} g` : "";
+    const wDiv = document.createElement("div");
+    wDiv.className = "weight";
+    wDiv.textContent = w ? `${round3(w)} g` : "";
 
     card.append(img, name, wDiv);
+    card.onclick = () => openModal(idx);
 
-    let globalIndex = start + idx;
-    card.onclick = () => openModal(globalIndex);
-
-    gallery.appendChild(card);
+    gallery.append(card);
   });
-
-  renderPagination(totalPages);
 }
 
-/* PAGINATION */
-function renderPagination(totalPages) {
-  paginationEl.innerHTML = "";
-
-  const prev = document.createElement("button");
-  prev.textContent = "Prev";
-  prev.className = "page-btn";
-  prev.disabled = currentPage === 1;
-  prev.onclick = () => {
-    currentPage--;
-    updateGallery();
-  };
-  paginationEl.appendChild(prev);
-
-  for (let i = 1; i <= totalPages; i++) {
-    const btn = document.createElement("button");
-    btn.textContent = i;
-    btn.className = "page-btn" + (i === currentPage ? " active" : "");
-    btn.onclick = () => {
-      currentPage = i;
-      updateGallery();
-    };
-    paginationEl.appendChild(btn);
-  }
-
-  const next = document.createElement("button");
-  next.textContent = "Next";
-  next.className = "page-btn";
-  next.disabled = currentPage === totalPages;
-  next.onclick = () => {
-    currentPage++;
-    updateGallery();
-  };
-  paginationEl.appendChild(next);
-}
-
-/* MODAL FUNCTIONS */
-function openModal(index) {
-  currentIndex = index;
+/* ===========================
+   MODAL FUNCTIONS
+=========================== */
+function openModal(i) {
+  currentIndex = i;
   updateModal();
-  modal.hidden = false;
-}
-
-function closeModal() {
-  modal.hidden = true;
-}
-
-function showModal(step) {
-  currentIndex =
-    (currentIndex + step + validViewList.length) % validViewList.length;
-  updateModal();
+  modalOverlay.hidden = false;
 }
 
 function updateModal() {
   const it = validViewList[currentIndex];
-  if (!it) return;
+  const w = weights[it.id.toLowerCase()];
 
   modalImg.src = it.src;
+  modalInfo.textContent = w ? `${it.name} — ${round3(w)} g` : it.name;
 
-  const w = weights[it.id.toLowerCase()];
-  modalInfo.textContent = w ? `${it.name} — ${w} g` : it.name;
-
-  orderBtn.onclick = () =>
-    window.open(
-      `https://wa.me/917780220369?text=${encodeURIComponent(it.name)}`,
-      "_blank"
-    );
+  orderBtn.href =
+    `https://wa.me/917780220369?text=${encodeURIComponent(
+      `I want to order ${it.name}${w ? " — " + round3(w) + " g" : ""}`
+    )}`;
 }
 
-/* HELPERS */
+function showModal(d) {
+  currentIndex = (currentIndex + d + validViewList.length) % validViewList.length;
+  updateModal();
+}
+
+function closeModal() {
+  modalOverlay.hidden = true;
+}
+
+/* ===========================
+   HELPERS
+=========================== */
 function debounce(fn, ms) {
   let t;
-  return (...args) => {
+  return (...a) => {
     clearTimeout(t);
-    t = setTimeout(() => fn(...args), ms);
+    t = setTimeout(() => fn(...a), ms);
   };
 }
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
+
+function round3(v) {
+  return Math.round(v * 1000) / 1000;
 }
 
+function clamp(v, a, b) {
+  return Math.max(a, Math.min(v, b));
+}
