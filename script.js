@@ -1,13 +1,14 @@
+// V6.2 - script.js
 // Config
-const metals = ["gold"]; // your project uses only gold by default; UI shows silver/diamond but data is gold
+const metals = ["gold"];
 const types = ["bangles","bracelet","chain","chandraharalu","earring","kada","locket","necklace","npchains","ring"];
-const maxImages = 100;      // per type (adjust as needed)
+const maxImages = 100;        // adjust if you want more images per type
 const imagesPath = "images";
 const weightsFile = "weights.json";
 const SLIDER_MAX = 250;
-const itemsPerPage = 12;    // pagination
+const itemsPerPage = 12;
 
-// DOM elements
+// DOM
 const gallery = document.getElementById("gallery");
 const searchBox = document.getElementById("searchBox");
 const weightFromInput = document.getElementById("weightFrom");
@@ -21,8 +22,9 @@ const catWrap = document.getElementById("categoriesWrap");
 const catSelectAll = document.getElementById("catSelectAll");
 const paginationEl = document.getElementById("pagination");
 const noImages = document.getElementById("noImages");
+const yearEl = document.getElementById("year");
 
-// modal
+// Modal
 const overlayModal = document.getElementById("overlayModal");
 const modalImg = document.getElementById("modalImg");
 const modalInfo = document.getElementById("modalInfo");
@@ -31,7 +33,7 @@ const modalPrev = document.getElementById("modalPrev");
 const modalNext = document.getElementById("modalNext");
 const orderBtn = document.getElementById("orderBtn");
 
-// state
+// State
 let allItems = [];
 let viewList = [];
 let validViewList = [];
@@ -39,8 +41,8 @@ let weights = {};
 let currentIndex = 0;
 let currentPage = 1;
 
-// Build the master list of items (doesn't check for file existence yet)
-(function buildAllItems(){
+// Build item list
+(function(){
   for(const m of metals){
     for(const t of types){
       for(let i=1;i<=maxImages;i++){
@@ -59,7 +61,7 @@ let currentPage = 1;
 
 function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 
-// Load weights.json if present
+// load weights.json
 fetch(weightsFile).then(r=>{
   if(!r.ok) throw new Error('no weights');
   return r.json();
@@ -67,40 +69,37 @@ fetch(weightsFile).then(r=>{
   weights = {};
   Object.keys(data).forEach(k=> weights[k.toLowerCase()] = data[k]);
 }).catch(()=> { weights = {}; })
-.finally(() => {
-  initFilters();
-  render(); // initial render
-});
+.finally(()=>{ initUI(); render(); });
 
-// Initialize filter UI
-function initFilters(){
-  // populate categories checkboxes dynamically from types
+// UI init
+function initUI(){
+  yearEl.textContent = new Date().getFullYear();
+
+  // populate category checkboxes
   catWrap.innerHTML = "";
   types.forEach(t=>{
-    const id = `cat_${t}`;
-    const label = document.createElement("label");
-    label.innerHTML = `<input type="checkbox" class="filter-type" value="${t}" checked /> ${capitalize(t)}`;
-    catWrap.appendChild(label);
+    const lbl = document.createElement("label");
+    lbl.innerHTML = `<input type="checkbox" class="filter-type" value="${t}" checked/> ${capitalize(t)}`;
+    catWrap.appendChild(lbl);
   });
 
   // select-all behavior
   catSelectAll.addEventListener("change", ()=>{
     const all = catSelectAll.checked;
-    document.querySelectorAll(".filter-type").forEach(cb=>cb.checked = all);
+    document.querySelectorAll(".filter-type").forEach(cb => cb.checked = all);
   });
-  // keep selectAll in sync
   catWrap.addEventListener("change", ()=>{
     const all = Array.from(document.querySelectorAll(".filter-type")).every(cb=>cb.checked);
     catSelectAll.checked = all;
   });
 
-  // search and filter interactions
-  searchBox.addEventListener("input", debounce(()=> { currentPage = 1; render(); }, 180));
+  // search debounce
+  searchBox.addEventListener("input", debounce(()=>{ currentPage = 1; render(); },150));
+
   applyFiltersBtn.addEventListener("click", ()=>{ currentPage = 1; render(); });
   clearFiltersBtn.addEventListener("click", resetFilters);
-  homeBtn.addEventListener("click", ()=>{ resetFilters(); });
+  homeBtn.addEventListener("click", resetFilters);
 
-  // weight slider logic
   rangeMin.addEventListener("input", ()=>{
     if(+rangeMin.value > +rangeMax.value) rangeMax.value = rangeMin.value;
     weightFromInput.value = round3(rangeMin.value);
@@ -111,10 +110,10 @@ function initFilters(){
     weightToInput.value = round3(rangeMax.value);
     currentPage = 1; render();
   });
-  weightFromInput.addEventListener("input", ()=>{ rangeMin.value = clamp(+weightFromInput.value||0,0,SLIDER_MAX); currentPage = 1; render(); });
-  weightToInput.addEventListener("input", ()=>{ rangeMax.value = clamp(+weightToInput.value||0,0,SLIDER_MAX); currentPage = 1; render(); });
+  weightFromInput.addEventListener("input", ()=>{ rangeMin.value = clamp(+weightFromInput.value||0,0,SLIDER_MAX); currentPage=1; render(); });
+  weightToInput.addEventListener("input", ()=>{ rangeMax.value = clamp(+weightToInput.value||0,0,SLIDER_MAX); currentPage=1; render(); });
 
-  // modal keyboard
+  // modal keystrokes
   document.addEventListener("keydown", (e)=>{
     if(e.key === "Escape") closeModal();
     if(overlayModal.hasAttribute("hidden")) return;
@@ -128,7 +127,7 @@ function initFilters(){
   modalNext.addEventListener("click", ()=>showModal(1));
 }
 
-// Reset filters to defaults
+// reset filters
 function resetFilters(){
   document.querySelectorAll(".filter-metal").forEach(cb=>cb.checked = true);
   document.querySelectorAll(".filter-type").forEach(cb=>cb.checked = true);
@@ -142,7 +141,7 @@ function resetFilters(){
   render();
 }
 
-// Main render: apply filters to allItems -> viewList -> check for existing images -> update gallery
+// render main
 function render(){
   const q = (searchBox.value||"").toLowerCase().trim();
   const mSel = Array.from(document.querySelectorAll(".filter-metal:checked")).map(x=>x.value);
@@ -155,7 +154,6 @@ function render(){
     if(!mSel.includes(it.metal)) return false;
     if(!tSel.includes(it.type)) return false;
     if(q && !(it.id.toLowerCase().includes(q) || (it.name && it.name.toLowerCase().includes(q)))) return false;
-    // weight filter: if active, require weight entry in weights.json and fall within range
     const w = weights[it.id.toLowerCase()];
     if(weightActive){
       if(w === undefined) return false;
@@ -166,11 +164,10 @@ function render(){
     return true;
   });
 
-  // now check which of viewList actually exist in images folder
   checkImagesExist();
 }
 
-// Only show cards for images that actually load
+// only show cards for existing images
 function checkImagesExist(){
   validViewList = [];
   let pending = viewList.length;
@@ -181,12 +178,12 @@ function checkImagesExist(){
   viewList.forEach(item=>{
     const img = new Image();
     img.src = item.src;
-    img.onload = ()=> { validViewList.push(item); if(--pending === 0) updateGallery(); };
-    img.onerror = ()=> { if(--pending === 0) updateGallery(); };
+    img.onload = ()=>{ validViewList.push(item); if(--pending===0) updateGallery(); };
+    img.onerror = ()=>{ if(--pending===0) updateGallery(); };
   });
 }
 
-// Update gallery and pagination
+// update grid & pagination
 function updateGallery(){
   gallery.innerHTML = "";
   if(validViewList.length === 0){
@@ -196,14 +193,12 @@ function updateGallery(){
   }
   noImages.hidden = true;
 
-  // pagination calculations
   const total = validViewList.length;
   const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
   currentPage = Math.min(Math.max(1, currentPage), totalPages);
   const start = (currentPage - 1) * itemsPerPage;
   const pageItems = validViewList.slice(start, start + itemsPerPage);
 
-  // render page items
   pageItems.forEach((item, idx)=>{
     const card = document.createElement("div");
     card.className = "card";
@@ -221,11 +216,12 @@ function updateGallery(){
     card.appendChild(img);
     card.appendChild(name);
     card.appendChild(wDiv);
-    card.addEventListener("click", ()=> openModal(start + idx)); // pass index within validViewList
+    // compute global index
+    const globalIndex = start + idx;
+    card.addEventListener("click", ()=> openModal(globalIndex));
     gallery.appendChild(card);
   });
 
-  // render pagination
   renderPagination(totalPages);
 }
 
@@ -239,7 +235,6 @@ function renderPagination(totalPages){
   prev.addEventListener("click", ()=>{ currentPage = Math.max(1, currentPage-1); updateGallery(); });
   paginationEl.appendChild(prev);
 
-  // show up to 7 page buttons centered
   const maxButtons = 7;
   let start = Math.max(1, currentPage - Math.floor(maxButtons/2));
   let end = Math.min(totalPages, start + maxButtons - 1);
@@ -261,7 +256,7 @@ function renderPagination(totalPages){
   paginationEl.appendChild(next);
 }
 
-// Modal functions
+// modal
 function openModal(globalIndex){
   currentIndex = globalIndex;
   updateModal();
@@ -286,26 +281,18 @@ function closeModal(){
 }
 
 // helpers
-function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
 function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 function round3(v){ return Math.round(v*1000)/1000; }
 
-// utilities
-// On initial load, set slider default values
+// init slider defaults
 rangeMin.value = 0;
 rangeMax.value = SLIDER_MAX;
 
-// ensure clicking overlay closes modal
+// overlay click closes modal
 overlayModal.addEventListener("click", (e)=>{
   if(e.target === overlayModal) closeModal();
 });
 
-// keep modal nav visible only when enough items
-function safeIndex(i){ return (i>=0 && i<validViewList.length); }
-
-// Click on card passes index relative to page, convert to global index already handled
-
-// Expose simple console helpers for debugging (optional)
-window._SLNS = { allItems, getValid: ()=>validViewList };
-
-// initial render call already scheduled after weights load
+// expose debug
+window._SLNS = { allItems, getValid: ()=> validViewList };
