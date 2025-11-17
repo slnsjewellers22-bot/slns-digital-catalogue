@@ -178,8 +178,7 @@ function initUI() {
 adminBtn.onclick = () => {
     window.location.href = "/dashboard/index.html";
 };
-  
-}
+ 
 
 /* RESET FILTERS */
 function resetFilters() {
@@ -376,5 +375,6 @@ function debounce(fn, ms) {
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
+
 
 
