@@ -37,7 +37,7 @@ body {
 }
 
 }
-.adminBtn {
+.top-btn {
   background: var(--gold);
   color: #000;
   border: none;
@@ -226,4 +226,5 @@ body {
   padding: 20px;
   color: #ccc;
 }
+
 
