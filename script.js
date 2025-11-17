@@ -34,6 +34,11 @@ const catSelectAll = document.getElementById("catSelectAll");
 const paginationEl = document.getElementById("pagination");
 const noImages = document.getElementById("noImages");
 const yearEl = document.getElementById("year");
+const adminBtn = document.getElementById("adminBtn");
+adminBtn.onclick = () => {
+    window.location.href = "/dashboard/index.html";
+};
+
 
 /* MODAL */
 const modal = document.getElementById("modal");
@@ -367,3 +372,4 @@ function debounce(fn, ms) {
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
+
