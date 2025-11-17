@@ -1,230 +1,211 @@
+/* =====================================
+   GLOBAL
+===================================== */
 :root {
-  --gold: #f2c94c;
-  --accent: #f2c94c;
-  --bg: #10151c;
-  --text: #ffffff;
+  --gold: #e2c467;
+  --dark: #071019;
+  --muted: #ccc;
 }
 
-/* GENERAL */
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
   font-family: Arial, sans-serif;
+  background: #0a0f1a;
+  color: white;
 }
 
-/* HEADER */
+/* =====================================
+   HEADER
+===================================== */
 .header {
-  background: #0e131a;
-  padding: 10px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 12px;
+  background: var(--dark);
+  color: #fff;
+  border-bottom: 1px solid #333;
 }
-.title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--gold);
+
+.left-controls {
+  display: flex;
+  gap: 10px;
 }
+
+.top-btn,
 .home-btn {
   background: var(--gold);
-  color: #000;
+  color: var(--dark);
   border: none;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-radius: 6px;
-  cursor: pointer;
   font-weight: 600;
+  cursor: pointer;
 }
 
-}
-.top-btn {
+.filter-icon {
   background: var(--gold);
-  color: #000;
-  border: none;
-  padding: 8px 12px;
+  color: var(--dark);
+  padding: 6px 10px;
   border-radius: 6px;
+  border: none;
   cursor: pointer;
-  font-weight: 600;
+  font-size: 20px;
 }
 
-/* FILTER BAR */
+/* =====================================
+   FILTER BAR
+===================================== */
 .filter-bar {
-  background: #0f1a25;
-  padding: 12px;
-  display: grid;
-  gap: 12px;
+  display: none;
+  background: #111827;
+  padding: 15px;
+  border-bottom: 1px solid #333;
+}
+
+.filter-bar.show {
+  display: block;
+}
+
+.filter-col {
+  margin-bottom: 15px;
 }
 
 .filter-col label {
-  font-size: 14px;
-}
-
-.filter-col input[type="text"],
-.filter-col input[type="number"] {
-  padding: 6px;
-  width: 100%;
-  border-radius: 6px;
-  border: none;
-  margin-top: 4px;
-}
-
-.categories label {
-  margin-right: 12px;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
 }
 
 .weight-input {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+}
+
+.weight-input input {
+  width: 70px;
 }
 
 .weight-range input {
   width: 100%;
 }
 
-.filter-actions {
-  display: flex;
-  gap: 10px;
-}
-.filter-actions button {
-  background: var(--gold);
-  color: #000;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-/* GALLERY */
-.gallery {
+/* =====================================
+   GALLERY
+===================================== */
+#gallery {
   padding: 12px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
   gap: 12px;
 }
 
 .card {
-  background: #16202b;
-  padding: 8px;
+  background: #111827;
+  padding: 10px;
   border-radius: 8px;
-  text-align: center;
   cursor: pointer;
+  transition: 0.2s;
 }
+
+.card:hover {
+  transform: scale(1.03);
+}
+
 .card img {
   width: 100%;
-  height: 150px;
+  height: 155px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 6px;
 }
+
 .name {
+  font-size: 14px;
   margin-top: 6px;
-  font-size: 15px;
+  color: #e7e7e7;
 }
+
 .weight {
   font-size: 13px;
-  color: #bababa;
+  color: var(--gold);
+  margin-top: 2px;
 }
 
-/* NO IMAGES */
-.no-images {
-  text-align: center;
-  padding: 20px;
-  font-size: 18px;
-}
-
-/* PAGINATION */
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  padding-bottom: 20px;
-}
-.page-btn {
-  background: #444;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  color: #fff;
-  cursor: pointer;
-}
-.page-btn.active {
-  background: var(--gold);
-  color: #000;
-}
-
-/* MODAL FIX */
-.modal[hidden] {
-  display: none !important;
-}
-
-.modal {
+/* =====================================
+   MODAL
+===================================== */
+.overlay-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.88);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 3000;
+  background: rgba(0,0,0,0.7);
+  z-index: 2000;
 }
 
-.modal-inner {
-  text-align: center;
-  max-width: 90%;
-}
-
-.modal img {
-  max-width: 90vw;
-  max-height: 75vh;
-  border-radius: 10px;
-}
-
-.modal-info {
-  margin-top: 10px;
-  font-size: 18px;
-  color: var(--accent);
-}
-
-.orderBtn {
-  margin-top: 12px;
-  padding: 10px 16px;
-  border-radius: 8px;
+.modal-card {
+  position: relative;
+  max-width: 92%;
+  max-height: 92%;
   background: transparent;
-  border: 1px solid var(--accent);
-  color: var(--accent);
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-card img {
+  max-width: 90vw;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  font-size: 20px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
-/* NAV BUTTONS */
 .modal-nav {
-  position: fixed;
+  position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 38px;
-  background: transparent;
-  color: #fff;
+  background: rgba(0,0,0,0.5);
   border: none;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
   cursor: pointer;
-}
-.modal-prev { left: 20px; }
-.modal-next { right: 20px; }
-
-/* CLOSE BUTTON */
-#modalClose {
-  position: fixed;
-  top: 16px;
-  right: 20px;
-  color: #fff;
-  background: none;
-  border: none;
-  font-size: 36px;
-  cursor: pointer;
+  font-size: 24px;
 }
 
-/* FOOTER */
-.footer {
+.modal-nav.prev { left: 8px; }
+.modal-nav.next { right: 8px; }
+
+.order-btn {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--dark);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+/* No Images */
+#noImages {
   text-align: center;
-  padding: 20px;
-  color: #ccc;
+  font-size: 20px;
+  padding: 30px;
 }
-
-
