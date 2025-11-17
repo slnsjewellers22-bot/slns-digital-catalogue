@@ -7,5 +7,14 @@
     "weight": 45,
     "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles7.jpg",
     "timestamp": 1763210917148
+  },
+  {
+    "id": "gold_necklace25",
+    "name": "gold necklace25",
+    "metal": "gold",
+    "category": "necklace",
+    "weight": 38,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_necklace25.jpg",
+    "timestamp": 1763380228913
   }
 ]
