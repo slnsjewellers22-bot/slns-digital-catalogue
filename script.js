@@ -175,11 +175,10 @@ function initUI() {
 
   /* ADMIN REDIRECT — FIXED */
   const adminBtn = document.getElementById("adminBtn");
-  if (adminBtn) {
-    adminBtn.onclick = () => {
+      adminBtn.onclick = () => {
       window.location.href = "/dashboard/index.html";
     };
-  }
+  
 }
 
 /* RESET FILTERS */
@@ -377,3 +376,4 @@ function debounce(fn, ms) {
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
+
