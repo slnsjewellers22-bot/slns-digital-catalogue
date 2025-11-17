@@ -1,43 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SLNS Digital Catalogue</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
-  <!-- Top Header -->
-  <header class="top-header">
-    <div class="brand">SLNS Jewellery</div>
-    <button id="homeBtn" class="header-btn">Home</button>
+  <!-- HEADER -->
+  <header class="header">
+    <h1 class="title">SLNS Jewellery</h1>
+    <button id="homeBtn" class="home-btn">Home</button>
   </header>
 
-  <!-- Filter Bar -->
-  <section class="filter-panel">
-    
-    <div class="filter-group">
+  <!-- SEARCH + FILTER BAR -->
+  <section class="filter-bar">
+
+    <div class="filter-col">
       <label>Search</label>
-      <input id="searchBox" type="text" placeholder="Search items...">
+      <input id="searchBox" type="text" placeholder="Search..." />
     </div>
 
-    <div class="filter-group">
-      <label>Category</label>
-      <label><input type="checkbox" id="catSelectAll" checked> Select All</label>
-      <div id="categoriesWrap" class="category-list"></div>
+    <div class="filter-col">
+      <label>
+        <input type="checkbox" id="catSelectAll" checked />
+        Select All Categories
+      </label>
+      <div id="categoriesWrap" class="categories"></div>
     </div>
 
-    <div class="filter-group">
+    <div class="filter-col">
       <label>Weight (g)</label>
-      <div class="weight-box">
-        <input id="weightFrom" type="number" placeholder="From">
-        <input id="weightTo" type="number" placeholder="To">
+      <div class="weight-input">
+        <input id="weightFrom" type="number" placeholder="From" />
+        <input id="weightTo" type="number" placeholder="To" />
       </div>
-      <div class="range-wrap">
-        <input id="rangeMin" type="range" min="0" max="250" value="0">
-        <input id="rangeMax" type="range" min="0" max="250" value="250">
+
+      <div class="weight-range">
+        <input id="rangeMin" type="range" min="0" max="250" value="0" />
+        <input id="rangeMax" type="range" min="0" max="250" value="250" />
       </div>
     </div>
 
@@ -48,37 +51,36 @@
 
   </section>
 
-  <!-- Gallery -->
+  <!-- GALLERY -->
   <main>
     <div id="noImages" class="no-images" hidden>No images found</div>
     <div id="gallery" class="gallery"></div>
     <div id="pagination" class="pagination"></div>
   </main>
 
+  <!-- MODAL (FIXED VERSION) -->
+  <div id="modal" class="modal" hidden>
 
+    <button id="modalClose" class="modal-close">×</button>
 
-  <!-- MODAL PREVIEW -->
-  <div id="overlayModal" class="overlay-modal" hidden>
-    <div class="modal-card">
+    <button id="modalPrev" class="modal-nav modal-prev">❮</button>
 
-      <button id="modalClose" class="modal-close">×</button>
-
-      <img id="modalImg" src="" alt="Preview">
-
+    <div class="modal-inner">
+      <img id="modalImg" alt="Image preview" />
       <div id="modalInfo" class="modal-info"></div>
 
-      <button id="modalPrev" class="modal-nav prev">‹</button>
-      <button id="modalNext" class="modal-nav next">›</button>
-
-      <a id="orderBtn" class="order-btn" target="_blank">Order via WhatsApp</a>
-
+      <button id="orderBtn" class="orderBtn">Order via WhatsApp</button>
     </div>
+
+    <button id="modalNext" class="modal-nav modal-next">❯</button>
+
   </div>
 
+  <!-- FOOTER -->
   <footer class="footer">
     © <span id="year"></span> SLNS Jewellery
   </footer>
 
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
