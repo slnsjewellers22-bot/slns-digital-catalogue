@@ -9,14 +9,15 @@
 <body>
   <header class="topbar">
     <div class="brand">SLNS Jewellery</div>
-    <div class="top-actions">
+
+    <div class="top-controls">
       <button id="homeBtn" class="btn">Home</button>
       <input id="searchBox" class="search" placeholder="Search items (name or id)"/>
     </div>
   </header>
 
-  <!-- Top Expanded Filter Panel (Option B) -->
-  <section class="filter-panel" id="filterPanel">
+  <!-- Top Filter Panel (Option B1) -->
+  <section class="filter-panel" aria-label="Filters">
     <div class="filter-row">
       <div class="filter-block">
         <div class="filter-title">Metals</div>
@@ -26,9 +27,13 @@
       </div>
 
       <div class="filter-block">
-        <div class="filter-title">Categories <label class="muted small"><input type="checkbox" id="catSelectAll" checked/> Select all</label></div>
+        <div class="filter-title">Categories
+          <label class="small muted" style="margin-left:8px">
+            <input id="catSelectAll" type="checkbox" checked/> Select all
+          </label>
+        </div>
         <div id="categoriesWrap" class="categoriesWrap">
-          <!-- category checkboxes inserted by JS -->
+          <!-- categories inserted by script -->
         </div>
       </div>
 
@@ -55,11 +60,10 @@
     <section id="gallery" class="grid" aria-live="polite"></section>
     <div id="noImages" class="noimages" hidden>No items found.</div>
 
-    <!-- Pagination -->
     <nav id="pagination" class="pagination" aria-label="Pagination"></nav>
   </main>
 
-  <footer>© 2025 SLNS Jewellery</footer>
+  <footer class="footer">© <span id="year"></span> SLNS Jewellery</footer>
 
   <!-- Modal preview -->
   <div id="overlayModal" class="overlay-modal" hidden>
