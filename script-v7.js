@@ -1,25 +1,21 @@
-/* SLNS V7 — Main script (Phase 1)
-   Features implemented:
-   - modern UI + tabs
-   - lazy loading with blur -> remove on load
-   - order cart (localStorage)
-   - PWA registration (service worker)
-   - dark mode toggle
-   - weight parsing from filenames + weights.json fallback
-   - admin sync hook (manual)
-   - multi-language skeleton
+/* script-v7.js — SLNS V7 (fixed categories, ALL shows everything)
+   - Option B: fixed categories
+   - ALL tab shows every image
+   - Lazy load with blur-to-sharp
+   - Modal preview, cart, filters, pagination
 */
 
-/* -------- CONFIG -------- */
+/* ====== CONFIG ====== */
 const metals = ["gold"];
 const types = ["all","bangles","bracelet","chain","chandraharalu","earring","kada","locket","necklace","npchains","ring"];
-const maxImages = 500; // safe upper bound
+const maxImages = 500;          // how many images per type to probe (increase if needed)
 const imagesPath = "images";
 const weightsFile = "weights.json";
 const itemsPerPage = 12;
+const SLIDER_MAX = 250;
 const waNumber = "917780220369";
 
-/* -------- DOM -------- */
+/* ====== DOM ====== */
 const gallery = document.getElementById("gallery");
 const searchBox = document.getElementById("searchBox");
 const menuToggle = document.getElementById("menuToggle");
@@ -34,16 +30,18 @@ const clearFilters = document.getElementById("clearFilters");
 const syncBtn = document.getElementById("syncBtn");
 const noImages = document.getElementById("noImages");
 const pagination = document.getElementById("pagination");
+
 const cartToggle = document.getElementById("cartToggle");
 const cartDrawer = document.getElementById("cartDrawer");
 const cartCount = document.getElementById("cartCount");
 const cartItemsEl = document.getElementById("cartItems");
 const sendOrderBtn = document.getElementById("sendOrder");
+
 const homeBtn = document.getElementById("homeBtn");
 const adminBtn = document.getElementById("adminBtn");
 const darkToggle = document.getElementById("darkToggle");
 
-/* Modal elements */
+/* Modal */
 const modal = document.getElementById("overlayModal");
 const modalImg = document.getElementById("modalImg");
 const modalInfo = document.getElementById("modalInfo");
@@ -52,285 +50,323 @@ const modalNext = document.getElementById("modalNext");
 const modalClose = document.getElementById("modalClose");
 const orderBtn = document.getElementById("orderBtn");
 
-/* -------- State -------- */
-let allItems = [];       // master list
-let displayed = [];      // filtered list
-let validList = [];      // images that actually exist
-let weights = {};        // loaded from weights.json or filename
+/* ====== STATE ====== */
+let allItems = [];      // master list (id, src, name, metal, type)
+let displayed = [];     // filtered list before probing
+let validList = [];     // images that exist
+let weights = {};       // map id -> weight
 let currentTab = "all";
 let currentPage = 1;
-let cart = JSON.parse(localStorage.getItem("slns_cart")||"[]");
 let currentModalIndex = -1;
+let cart = JSON.parse(localStorage.getItem("slns_cart") || "[]");
 
-/* -------- Helpers -------- */
-function capitalize(s){ return s[0].toUpperCase()+s.slice(1); }
-function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
-function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-function round3(v){ return Math.round(v*1000)/1000; }
+/* ====== HELPERS ====== */
+const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+const debounce = (fn, ms=150)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const round3 = v => Math.round(v*1000)/1000;
 
-/* -------- Build master list (ids and default src). We will probe actual files later -------- */
-(function build(){
+/* ====== Build master list (fixed categories) ====== */
+(function buildMaster(){
+  allItems = [];
   for(const m of metals){
     for(const t of types){
-      if(t==="all") continue;
+      if(t === "all") continue;
       for(let i=1;i<=maxImages;i++){
         const id = `${m}_${t}${i}`;
         allItems.push({
           id,
-          src:`${imagesPath}/${id}.jpg`,
-          name:`${capitalize(m)} ${capitalize(t)} ${i}`,
-          metal:m,
-          type:t,
+          src: `${imagesPath}/${id}.jpg`,
+          name: `${cap(m)} ${cap(t)} ${i}`,
+          metal: m,
+          type: t
         });
       }
     }
   }
 })();
 
-/* -------- Weight parsing util (filename like gold_ring1_15.750.jpg) -------- */
+/* ====== Parse weight from filename utility ====== */
 function parseWeightFromFilename(src){
-  // get last segment
   const name = src.split('/').pop();
-  // try match _15.750 before extension
   const m = name.match(/_(\d+(?:\.\d+))(?=\.[a-zA-Z]{2,4}$)/);
   if(m) return parseFloat(m[1]);
   return undefined;
 }
 
-/* -------- Load weights.json fallback -------- */
+/* ====== Load weights.json and then init UI ====== */
 fetch(weightsFile).then(r=>{
-  if(!r.ok) throw null;
+  if(!r.ok) throw new Error('no weights.json');
   return r.json();
 }).then(j=>{
   Object.keys(j).forEach(k=> weights[k.toLowerCase()] = j[k]);
-}).catch(()=>{/* no weights.json or error, continue */})
-.finally(()=> {
-  // parse weights from filenames into weights map (if not present)
+}).catch(()=>{/* ignore if missing */})
+.finally(()=>{
+  // enrich weights from filenames where possible (do not overwrite existing)
   allItems.forEach(it=>{
-    const parsed = parseWeightFromFilename(it.src);
-    if(parsed!==undefined) weights[it.id.toLowerCase()] = parsed;
+    const p = parseWeightFromFilename(it.src);
+    if(p !== undefined && weights[it.id.toLowerCase()] === undefined){
+      weights[it.id.toLowerCase()] = p;
+    }
   });
-
   initUI();
   applyFiltersAndRender();
 });
 
-/* -------- UI init: tabs, handlers, cart -------- */
+/* ====== UI Initialization ====== */
 function initUI(){
-  // tabs
+  // build tabs (fixed list)
   categoryTabs.innerHTML = "";
   types.forEach(t=>{
     const b = document.createElement("button");
-    b.className = "tab"+(t===currentTab?" active":"");
-    b.textContent = t.toUpperCase();
+    b.className = "tab" + (t===currentTab ? " active" : "");
     b.dataset.type = t;
-    b.onclick = ()=>{ currentTab = t; document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); b.classList.add("active"); currentPage=1; applyFiltersAndRender(); };
+    b.textContent = t.toUpperCase();
+    b.onclick = () => {
+      currentTab = t;
+      currentPage = 1;
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      applyFiltersAndRender();
+      // hide panel on mobile
+      filterPanel.classList.remove('show');
+    };
     categoryTabs.appendChild(b);
   });
 
-  // filter panel toggle
-  menuToggle.onclick = ()=> filterPanel.classList.toggle("show");
-  document.addEventListener("click", e=>{ if(!filterPanel.contains(e.target) && e.target!==menuToggle) filterPanel.classList.remove("show"); });
+  // menu toggle
+  if(menuToggle){
+    menuToggle.onclick = ()=> filterPanel.classList.toggle('show');
+    document.addEventListener('click', e=>{
+      if(!filterPanel.contains(e.target) && e.target !== menuToggle) filterPanel.classList.remove('show');
+    });
+  }
 
-  // weight sliders sync
-  rangeMin.oninput = ()=>{ if(+rangeMin.value > +rangeMax.value) rangeMax.value = rangeMin.value; weightFrom.value = round3(rangeMin.value); };
-  rangeMax.oninput = ()=>{ if(+rangeMax.value < +rangeMin.value) rangeMin.value = rangeMax.value; weightTo.value = round3(rangeMax.value); };
-  weightFrom.oninput = ()=> rangeMin.value = clamp(+weightFrom.value||0,0,250);
-  weightTo.oninput = ()=> rangeMax.value = clamp(+weightTo.value||0,0,250);
+  // weight slider sync
+  if(rangeMin && rangeMax && weightFrom && weightTo){
+    rangeMin.value = 0; rangeMax.value = SLIDER_MAX;
+    rangeMin.oninput = ()=> { if(+rangeMin.value > +rangeMax.value) rangeMax.value = rangeMin.value; weightFrom.value = round3(rangeMin.value); };
+    rangeMax.oninput = ()=> { if(+rangeMax.value < +rangeMin.value) rangeMin.value = rangeMax.value; weightTo.value = round3(rangeMax.value); };
+    weightFrom.oninput = ()=> rangeMin.value = clamp(+weightFrom.value||0,0,SLIDER_MAX);
+    weightTo.oninput = ()=> rangeMax.value = clamp(+weightTo.value||0,0,SLIDER_MAX);
+  }
 
-  // control buttons
-  applyFilters.onclick = ()=>{ currentPage=1; applyFiltersAndRender(); filterPanel.classList.remove("show"); };
-  clearFilters.onclick = ()=>{ searchBox.value=''; weightFrom.value=''; weightTo.value=''; rangeMin.value=0; rangeMax.value=250; currentPage=1; applyFiltersAndRender(); };
-  syncBtn.onclick = ()=> manualSync();
-
-  // cart
-  updateCartUI();
-  cartToggle.onclick = ()=> cartDrawer.classList.toggle("show");
-  sendOrderBtn.onclick = ()=> sendCartOrder();
-
-  // modal
-  modalClose.onclick = ()=> modal.hidden = true;
-  modalPrev.onclick = ()=> showModal(-1);
-  modalNext.onclick = ()=> showModal(1);
-  modal.addEventListener("click", e=>{ if(e.target===modal) modal.hidden=true; });
-
-  // keyboard
-  document.addEventListener("keydown", e=>{
-    if(!modal.hidden){
-      if(e.key==='Escape') modal.hidden=true;
-      if(e.key==='ArrowLeft') showModal(-1);
-      if(e.key==='ArrowRight') showModal(1);
-    }
-  });
-
-  // admin, home, dark
-  adminBtn && (adminBtn.onclick = ()=> location.href = "/dashboard/index.html");
-  homeBtn && (homeBtn.onclick = ()=> { searchBox.value=''; weightFrom.value=''; weightTo.value=''; rangeMin.value=0; rangeMax.value=250; currentTab='all'; document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelector('.tab[data-type=\"all\"]').classList.add('active'); applyFiltersAndRender(); });
-  darkToggle && (darkToggle.onclick = ()=> { document.documentElement.classList.toggle('dark'); localStorage.setItem('slns_dark', document.documentElement.classList.contains('dark') ? '1':'0'); });
-
-  // restore dark
-  if(localStorage.getItem('slns_dark')==='1') document.documentElement.classList.add('dark');
+  // filter buttons
+  if(applyFilters) applyFilters.onclick = ()=> { currentPage = 1; applyFiltersAndRender(); filterPanel.classList.remove('show'); };
+  if(clearFilters) clearFilters.onclick = ()=> { searchBox.value=''; weightFrom.value=''; weightTo.value=''; rangeMin.value=0; rangeMax.value=SLIDER_MAX; currentPage=1; applyFiltersAndRender(); };
 
   // search debounce
-  searchBox.oninput = debounce(()=> { currentPage=1; applyFiltersAndRender(); }, 180);
+  if(searchBox) searchBox.oninput = debounce(()=> { currentPage=1; applyFiltersAndRender(); }, 200);
+
+  // sync button placeholder
+  if(syncBtn) syncBtn.onclick = ()=> { alert('Manual sync placeholder — configure admin sync to auto-sync.'); };
+
+  // pagination container already present
+
+  // cart
+  if(cartToggle) cartToggle.onclick = ()=> cartDrawer.classList.toggle('show');
+  updateCartUI();
+  if(sendOrderBtn) sendOrderBtn.onclick = sendCartOrder;
+
+  // admin & home & dark
+  if(adminBtn) adminBtn.onclick = ()=> location.href = "/dashboard/index.html";
+  if(homeBtn) homeBtn.onclick = ()=> { // reset filters and show all
+    searchBox.value=''; weightFrom.value=''; weightTo.value=''; rangeMin.value=0; rangeMax.value=SLIDER_MAX; currentTab='all';
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    const allTab = document.querySelector('.tab[data-type="all"]');
+    if(allTab) allTab.classList.add('active');
+    currentPage = 1; applyFiltersAndRender();
+  }
+  if(darkToggle) {
+    darkToggle.onclick = ()=> {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('slns_dark', document.documentElement.classList.contains('dark') ? '1' : '0');
+    };
+    if(localStorage.getItem('slns_dark')==='1') document.documentElement.classList.add('dark');
+  }
+
+  // modal events
+  if(modalClose) modalClose.onclick = ()=> modal.hidden = true;
+  if(modalPrev) modalPrev.onclick = ()=> showModal(-1);
+  if(modalNext) modalNext.onclick = ()=> showModal(1);
+  if(modal){
+    modal.addEventListener('click', e=> { if(e.target === modal) modal.hidden = true; });
+    document.addEventListener('keydown', e=> {
+      if(modal.hidden) return;
+      if(e.key === 'Escape') modal.hidden = true;
+      if(e.key === 'ArrowLeft') showModal(-1);
+      if(e.key === 'ArrowRight') showModal(1);
+    });
+  }
+
+  // try register service worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(()=>{/* ignore */});
+  }
 }
 
-/* -------- Apply filters -> probe images -> render gallery -------- */
+/* ====== Apply filters and probe images ====== */
 function applyFiltersAndRender(){
-  const q = (searchBox.value||'').trim().toLowerCase();
-  const minW = parseFloat(weightFrom.value);
-  const maxW = parseFloat(weightTo.value);
-  const weightActive = (weightFrom.value || weightTo.value);
+  const q = (searchBox && searchBox.value || '').trim().toLowerCase();
+  const minW = parseFloat((weightFrom && weightFrom.value) || '');
+  const maxW = parseFloat((weightTo && weightTo.value) || '');
+  const weightActive = (weightFrom && weightFrom.value) || (weightTo && weightTo.value);
 
   displayed = allItems.filter(it=>{
-    if(currentTab!=='all' && it.type!==currentTab) return false;
+    if(currentTab !== 'all' && it.type !== currentTab) return false;
     if(q && !(it.id.toLowerCase().includes(q) || it.name.toLowerCase().includes(q))) return false;
     const w = weights[it.id.toLowerCase()];
     if(weightActive){
-      if(w===undefined) return false;
-      if(!(w >= (isNaN(minW)?-Infinity:minW) && w <= (isNaN(maxW)?Infinity:maxW))) return false;
+      if(w === undefined) return false;
+      if(!(w >= (isNaN(minW) ? -Infinity : minW) && w <= (isNaN(maxW) ? Infinity : maxW))) return false;
     }
     return true;
   });
 
-  // probe images to ensure they exist (prevents broken cards)
-  validList = []; let pending = displayed.length;
-  if(pending===0){ renderGallery(); return; }
+  // probe existence
+  validList = [];
+  let pending = displayed.length;
+  if(pending === 0){
+    renderGallery();
+    return;
+  }
   displayed.forEach(it=>{
     const img = new Image();
     img.src = it.src;
-    img.onload = ()=>{ validList.push(it); if(--pending===0) renderGallery(); };
-    img.onerror = ()=>{ if(--pending===0) renderGallery(); };
+    img.onload = ()=> { validList.push(it); if(--pending === 0) renderGallery(); };
+    img.onerror = ()=> { if(--pending === 0) renderGallery(); };
   });
 }
 
-/* -------- renderGallery (with pagination) -------- */
+/* ====== Render gallery with pagination & lazy load ====== */
 function renderGallery(){
+  if(!gallery) return;
   gallery.innerHTML = '';
-  if(validList.length===0){ noImages.hidden = false; pagination.innerHTML=''; return; }
-  noImages.hidden = true;
+  if(validList.length === 0){
+    if(noImages) noImages.hidden = false;
+    pagination.innerHTML = '';
+    return;
+  }
+  if(noImages) noImages.hidden = true;
 
   const total = validList.length;
   const totalPages = Math.max(1, Math.ceil(total/itemsPerPage));
   if(currentPage > totalPages) currentPage = totalPages;
-  const start = (currentPage-1)*itemsPerPage;
-  const pageItems = validList.slice(start, start+itemsPerPage);
+  const start = (currentPage - 1) * itemsPerPage;
+  const pageItems = validList.slice(start, start + itemsPerPage);
 
   pageItems.forEach((it, idx)=>{
-    const card = document.createElement('div'); card.className='card';
-    const wrap = document.createElement('div'); wrap.className='imgwrap';
+    const card = document.createElement('div'); card.className = 'card';
+    const wrap = document.createElement('div'); wrap.className = 'imgwrap';
     const img = document.createElement('img');
     img.dataset.src = it.src;
     img.alt = it.name;
     img.loading = 'lazy';
-    // blur -> remove class on load
     img.addEventListener('load', ()=> img.classList.add('loaded'));
     img.addEventListener('error', ()=> img.classList.add('loaded'));
     wrap.appendChild(img);
 
-    const meta = document.createElement('div'); meta.className='meta';
-    const name = document.createElement('div'); name.className='name'; name.textContent = it.name;
-    const w = weights[it.id.toLowerCase()];
-    const weightDiv = document.createElement('div'); weightDiv.className='weight'; weightDiv.textContent = w ? `${round3(w)} g` : '';
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const name = document.createElement('div'); name.className = 'name'; name.textContent = it.name;
+    const wval = weights[it.id.toLowerCase()];
+    const weightDiv = document.createElement('div'); weightDiv.className = 'weight'; weightDiv.textContent = wval ? `${round3(wval)} g` : '';
     meta.appendChild(name); meta.appendChild(weightDiv);
 
-    const add = document.createElement('button'); add.className='add'; add.textContent='Add';
-    add.onclick = (e)=>{ e.stopPropagation(); addToCart(it); };
+    const add = document.createElement('button'); add.className = 'add'; add.textContent = 'Add';
+    add.onclick = (e)=> { e.stopPropagation(); addToCart(it); };
 
-    card.appendChild(wrap);
-    card.appendChild(meta);
-    card.appendChild(add);
+    card.appendChild(wrap); card.appendChild(meta); card.appendChild(add);
 
-    // preview on click
-    card.onclick = ()=> openModal(start+idx);
+    // clicking opens modal (global index in validList)
+    const globalIndex = start + idx;
+    card.onclick = ()=> openModal(globalIndex);
 
     gallery.appendChild(card);
 
-    // lazy load actual image with small timeout (progressive)
+    // lazy load small timeout for progressive feel
     setTimeout(()=> { img.src = img.dataset.src; }, 50);
   });
 
+  // pagination
   renderPagination(totalPages);
 }
 
-/* -------- pagination -------- */
+/* ====== Pagination ====== */
 function renderPagination(totalPages){
-  pagination.innerHTML='';
+  pagination.innerHTML = '';
   for(let p=1;p<=totalPages;p++){
-    const b = document.createElement('button'); b.className='tab'; b.textContent=p;
+    const b = document.createElement('button'); b.className='tab'; b.textContent = p;
     if(p===currentPage) b.classList.add('active');
-    b.onclick = ()=> { currentPage=p; renderGallery(); window.scrollTo({top:0,behavior:'smooth'}); };
+    b.onclick = ()=> { currentPage = p; renderGallery(); window.scrollTo({top:0,behavior:'smooth'}); };
     pagination.appendChild(b);
   }
 }
 
-/* -------- Cart -------- */
-function addToCart(item){
-  const existing = cart.find(c=>c.id===item.id);
-  if(existing){ existing.qty = (existing.qty||1)+1; }
-  else cart.push({ id:item.id, name:item.name, src:item.src, weight:weights[item.id.toLowerCase()] || null, qty:1 });
-  localStorage.setItem('slns_cart', JSON.stringify(cart));
-  updateCartUI();
-}
-
-function updateCartUI(){
-  cartItemsEl.innerHTML = '';
-  cartCount.textContent = cart.reduce((s,i)=>s+i.qty,0);
-  cart.forEach(ci=>{
-    const el = document.createElement('div'); el.className='cart-item';
-    el.innerHTML = `<div><strong>${ci.name}</strong><div class="small">${ci.weight?round3(ci.weight)+' g':''}</div></div>
-                    <div class="small">x${ci.qty}</div>`;
-    cartItemsEl.appendChild(el);
-  });
-  document.getElementById('cartSummary').textContent = `${cart.reduce((s,i)=>s+i.qty,0)} items`;
-}
-
-/* -------- Send order via WhatsApp -------- */
-function sendCartOrder(){
-  if(cart.length===0) return alert('Cart empty');
-  let text = `Order from SLNS Digital Catalogue:%0A`;
-  cart.forEach(ci=> text += `- ${ci.name}${ci.weight?` (${round3(ci.weight)} g)`:""} x${ci.qty}%0A`);
-  const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`;
-  window.open(url,'_blank');
-}
-
-/* -------- Modal functions -------- */
-function openModal(globalIndex){
-  currentModalIndex = globalIndex;
+/* ====== Modal functions ====== */
+function openModal(index){
+  currentModalIndex = index;
   updateModal();
-  modal.hidden = false;
+  if(modal) modal.hidden = false;
 }
 
 function updateModal(){
   const item = validList[currentModalIndex];
   if(!item) return;
-  modalImg.src = item.src;
+  if(modalImg) modalImg.src = item.src;
   const w = weights[item.id.toLowerCase()];
-  modalInfo.textContent = w ? `${item.name} — ${round3(w)} g` : item.name;
-  orderBtn.href = `https://wa.me/${waNumber}?text=${encodeURIComponent("I want to order "+item.name+(w?` — ${round3(w)} g`:""))}`;
+  if(modalInfo) modalInfo.textContent = w ? `${item.name} — ${round3(w)} g` : item.name;
+  if(orderBtn) orderBtn.href = `https://wa.me/${waNumber}?text=${encodeURIComponent("I want to order "+item.name+(w?` — ${round3(w)} g`:""))}`;
 }
 
 function showModal(delta){
+  if(!validList.length) return;
   currentModalIndex = (currentModalIndex + delta + validList.length) % validList.length;
   updateModal();
 }
 
-/* -------- Manual admin sync hook (placeholder) -------- */
+/* ====== Cart ====== */
+function addToCart(item){
+  const existing = cart.find(c=>c.id === item.id);
+  if(existing) existing.qty = (existing.qty||1) + 1;
+  else cart.push({ id: item.id, name: item.name, src: item.src, weight: weights[item.id.toLowerCase()]||null, qty: 1 });
+  localStorage.setItem('slns_cart', JSON.stringify(cart));
+  updateCartUI();
+}
+
+function updateCartUI(){
+  if(!cartItemsEl || !cartCount) return;
+  cartItemsEl.innerHTML = '';
+  const totalQty = cart.reduce((s,i)=>s + (i.qty||0), 0);
+  cartCount.textContent = totalQty;
+  cart.forEach(ci=>{
+    const el = document.createElement('div'); el.className = 'cart-item';
+    el.innerHTML = `<div><strong>${ci.name}</strong><div class="small">${ci.weight?round3(ci.weight)+' g':''}</div></div><div class="small">x${ci.qty}</div>`;
+    cartItemsEl.appendChild(el);
+  });
+  const summary = document.getElementById('cartSummary');
+  if(summary) summary.textContent = `${totalQty} items`;
+}
+
+function sendCartOrder(){
+  if(!cart.length) { alert('Cart is empty'); return; }
+  let text = `Order from SLNS:%0A`;
+  cart.forEach(ci => text += `- ${ci.name}${ci.weight?` (${round3(ci.weight)} g)`:""} x${ci.qty}%0A`);
+  const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+
+/* ====== Manual sync placeholder ====== */
 function manualSync(){
-  // This function should call your admin endpoint or fetch items.json from repo
-  // For now it just re-runs the local process and shows a toast
   applyFiltersAndRender();
-  alert('Manual sync executed (placeholder). To auto-sync, provide admin credentials and endpoint.');
+  alert('Manual sync done (placeholder). To enable auto-sync provide admin/API details).');
 }
 
-/* -------- Auto-register service worker for PWA -------- */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').then(()=>console.log('SW registered')).catch(()=>console.log('SW fail'));
-}
+/* ====== Expose small API for debugging in console ====== */
+window._SLNS = {
+  applyFiltersAndRender,
+  addToCart,
+  getValid: ()=> validList,
+  weights
+};
 
-/* -------- utility: when page loaded, initial render handled in fetch finally ---- */
-
-/* expose debug for console */
-window._SLNS_V7 = { allItems, applyFiltersAndRender, addToCart };
-
-/* END of script */
+/* ====== END ====== */
