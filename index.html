@@ -1,68 +1,91 @@
-:root{
-  --bg:#071019;
-  --card: rgba(255,255,255,0.04);
-  --glass: rgba(255,255,255,0.04);
-  --accent:#caa164;
-  --muted: #9fb0bd;
-  --glass-border: rgba(255,255,255,0.06);
-}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SLNS Digital Catalogue — V7</title>
 
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;background:linear-gradient(180deg,#050506,#071019);font-family:Inter,system-ui,Arial;color:#eaf2f8}
-.container{max-width:1200px;margin:18px auto;padding:0 12px}
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#0b0c0e" />
+</head>
+<body>
 
-/* Topbar */
-.v7-topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;backdrop-filter: blur(6px);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-bottom:1px solid var(--glass-border)}
-.v7-topbar .left,.v7-topbar .right{display:flex;gap:10px;align-items:center}
-.brand{font-weight:800;color:var(--accent);font-size:20px}
-.btn{background:var(--accent);color:#071019;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
-.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
-.icon-btn{background:var(--accent);border:none;color:#071019;padding:8px;border-radius:8px;cursor:pointer;font-size:16px;position:relative}
-.badge{position:absolute;top:-6px;right:-8px;background:#071019;color:var(--accent);border-radius:8px;padding:2px 6px;font-size:11px}
+  <header class="v7-topbar">
+    <div class="left">
+      <button id="homeBtn" class="btn">Home</button>
+      <button id="adminBtn" class="btn">Admin</button>
+    </div>
 
-/* Filter panel */
-.filter-panel{position:fixed;top:64px;right:18px;width:360px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border:1px solid var(--glass-border);padding:14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);display:none;z-index:1200}
-.filter-panel.show{display:block}
-.fp-row{display:flex;flex-direction:column;gap:10px}
-#searchBox{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tab{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.02);cursor:pointer;font-weight:600}
-.tab.active{background:linear-gradient(90deg,var(--accent), #e1b962);color:#071019;box-shadow:0 6px 18px rgba(202,161,100,0.12)}
+    <div class="brand">SLNS Jewellery</div>
 
-/* Gallery */
-.gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
-@media(max-width:1100px){.gallery{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:700px){.gallery{grid-template-columns:repeat(2,1fr)}}
-.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;cursor:zoom-in;overflow:hidden;position:relative;transition:transform .18s}
-.card:hover{transform:translateY(-6px)}
-.card .imgwrap{position:relative;padding-top:75%;background:#081018;border-radius:10px;overflow:hidden}
-.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(8px);transform:scale(1.03);transition:filter .45s, transform .45s}
-.card img.loaded{filter:none;transform:scale(1)}
-.card .meta{display:flex;justify-content:space-between;align-items:center}
-.card .name{font-weight:700;font-size:14px}
-.card .weight{color:var(--muted);font-size:13px}
-.card .add{position:absolute;bottom:12px;right:12px;background:var(--accent);color:#071019;padding:6px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:700;box-shadow:0 8px 20px rgba(202,161,100,0.12)}
+    <div class="right">
+      <button id="darkToggle" class="icon-btn" title="Toggle dark mode">🌓</button>
+      <button id="menuToggle" class="icon-btn" title="Filters">☰</button>
+      <button id="cartToggle" class="icon-btn" title="Cart">🧾 <span id="cartCount" class="badge">0</span></button>
+    </div>
+  </header>
 
-/* Modal */
-.overlay-modal[hidden]{display:none !important}
-.overlay-modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:2000;padding:18px}
-.modal-card{position:relative;max-width:1000px;width:100%;background:linear-gradient(180deg,#071018,#07101a);border-radius:14px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,0.7);display:flex;flex-direction:column;align-items:center;gap:12px}
-.modal-card img{max-width:96%;max-height:72vh;object-fit:contain;border-radius:8px}
-.modal-close{position:absolute;top:10px;right:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer}
-.modal-nav{position:absolute;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#fff;font-size:32px;padding:10px 12px;cursor:pointer}
-.modal-nav.prev{left:10px}.modal-nav.next{right:10px}
-.modal-info{color:var(--muted)}
+  <!-- Filter Panel (hidden by default) -->
+  <div id="filterPanel" class="filter-panel" aria-hidden="true">
+    <div class="fp-row">
+      <input id="searchBox" placeholder="Search (id or name)..." />
 
-/* Cart Drawer */
-.cart-drawer{position:fixed;right:18px;bottom:18px;width:320px;background:linear-gradient(180deg,#071018,#07101a);border-radius:12px;padding:12px;border:1px solid var(--glass-border);box-shadow:0 20px 60px rgba(0,0,0,0.6);display:none;z-index:1300}
-.cart-drawer.show{display:block}
-.cart-items{max-height:320px;overflow:auto}
-.cart-item{display:flex;gap:8px;align-items:center;padding:8px;border-bottom:1px solid rgba(255,255,255,0.02)}
-.cart-item .small{font-size:13px;color:var(--muted)}
-.cart-footer{display:flex;justify-content:space-between;align-items:center;padding-top:8px}
+      <div class="tabs" id="categoryTabs" role="tablist">
+        <!-- tabs injected by JS -->
+      </div>
 
-/* Footer */
-.footer{text-align:center;padding:18px;color:var(--muted);margin-top:30px}
+      <div class="weights">
+        <label>Weight (g)</label>
+        <div class="weight-row">
+          <input id="weightFrom" type="number" step="0.001" placeholder="from" />
+          <input id="weightTo" type="number" step="0.001" placeholder="to" />
+        </div>
+        <div class="range-row">
+          <input id="rangeMin" type="range" min="0" max="250" step="0.1" />
+          <input id="rangeMax" type="range" min="0" max="250" step="0.1" />
+        </div>
+      </div>
 
-/* utilities */
-.hidden{display:none}
+      <div class="fp-actions">
+        <button id="applyFilters" class="btn primary">Apply</button>
+        <button id="clearFilters" class="btn">Clear</button>
+        <button id="syncBtn" class="btn ghost">Sync admin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gallery -->
+  <main class="container">
+    <section id="gallery" class="gallery" aria-live="polite"></section>
+    <div id="noImages" class="no-images" hidden>No items found.</div>
+    <nav id="pagination" class="pagination"></nav>
+  </main>
+
+  <!-- Cart Drawer -->
+  <aside id="cartDrawer" class="cart-drawer" aria-hidden="true">
+    <h3>Order Basket</h3>
+    <div id="cartItems" class="cart-items"></div>
+    <div class="cart-footer">
+      <div id="cartSummary" class="cart-summary">0 items</div>
+      <button id="sendOrder" class="btn primary">Send Order (WhatsApp)</button>
+    </div>
+  </aside>
+
+  <!-- Modal preview -->
+  <div id="overlayModal" class="overlay-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <button id="modalClose" class="modal-close" title="Close">×</button>
+      <img id="modalImg" src="" alt="Preview" />
+      <div id="modalInfo" class="modal-info"></div>
+      <button id="modalPrev" class="modal-nav prev" title="Previous">‹</button>
+      <button id="modalNext" class="modal-nav next" title="Next">›</button>
+      <a id="orderBtn" class="order-btn" target="_blank" rel="noopener">Order via WhatsApp</a>
+    </div>
+  </div>
+
+  <footer class="footer">© <span id="year"></span> SLNS Jewellery — V7</footer>
+
+  <script src="script-v7.js"></script>
+</body>
+</html>
