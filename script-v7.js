@@ -1,443 +1,319 @@
 /* -----------------------------------------------------
-   SLNS DIGITAL CATALOGUE — V7 (FINAL FIXED VERSION)
-   ✔ Category Bar always visible
-   ✔ Modal does NOT auto-open
-   ✔ Close button works
-   ✔ Overlay click works
-   ✔ ESC works
-   ✔ Fast filters + lazy loading
-   ✔ Basket + Dark mode
+   SLNS DIGITAL CATALOGUE — V7 (Stable Build)
+   FIXES:
+   ✔ No auto-open modal
+   ✔ Modal close works
+   ✔ Category bar visible always
+   ✔ Filters toggle correctly
+   ✔ Lazy loading stable
 ----------------------------------------------------- */
 
-document.addEventListener("DOMContentLoaded", () => {
+const metals = ["gold"];
+const types = [
+  "ALL", "bangles", "bracelet", "chain", "chandraharalu",
+  "earring", "kada", "locket", "necklace", "npchains", "ring"
+];
 
-  /* ----------------------
-      CONFIG
-  ---------------------- */
-  const metals = ["gold"];
-  const types = [
-    "all",
-    "bangles","bracelet","chain","chandraharalu",
-    "earring","kada","locket","necklace","npchains","ring"
-  ];
-  const maxImages = 100;
-  const imagesPath = "images";
-  const weightsFile = "weights.json";
-  const itemsPerPage = 12;
-  const SLIDER_MAX = 250;
-  const waNumber = "917780220369";
+const maxImages = 100;
+const imagesPath = "images";
+const weightFile = "weights.json";
+const perPage = 12;
+const SLIDER_MAX = 250;
 
-  /* ----------------------
-      DOM ELEMENTS
-  ---------------------- */
-  const gallery = document.getElementById("gallery");
-  const noImages = document.getElementById("noImages");
-  const paginationEl = document.getElementById("pagination");
+/* DOM */
+const gallery = document.getElementById("gallery");
+const searchBox = document.getElementById("searchBox");
+const weightFrom = document.getElementById("weightFrom");
+const weightTo = document.getElementById("weightTo");
+const rangeMin = document.getElementById("rangeMin");
+const rangeMax = document.getElementById("rangeMax");
+const categoryTabs = document.getElementById("categoryTabs");
+const pagination = document.getElementById("pagination");
+const noImages = document.getElementById("noImages");
 
-  const searchBox = document.getElementById("searchBox");
-  const filterPanel = document.getElementById("filterPanel");
-  const menuToggle = document.getElementById("menuToggle");
-  const applyFiltersBtn = document.getElementById("applyFilters");
-  const clearFiltersBtn = document.getElementById("clearFilters");
+const filterPanel = document.getElementById("filterPanel");
+const menuToggle = document.getElementById("menuToggle");
 
-  const categoryTabs = document.getElementById("categoryTabs");
+const cartDrawer = document.getElementById("cartDrawer");
+const cartToggle = document.getElementById("cartToggle");
+const cartItems = document.getElementById("cartItems");
+const cartCount = document.getElementById("cartCount");
 
-  const weightFrom = document.getElementById("weightFrom");
-  const weightTo = document.getElementById("weightTo");
-  const rangeMin = document.getElementById("rangeMin");
-  const rangeMax = document.getElementById("rangeMax");
+const modal = document.getElementById("overlayModal");
+const modalImg = document.getElementById("modalImg");
+const modalClose = document.getElementById("modalClose");
+const modalPrev = document.getElementById("modalPrev");
+const modalNext = document.getElementById("modalNext");
+const modalInfo = document.getElementById("modalInfo");
+const orderBtn = document.getElementById("orderBtn");
 
-  const homeBtn = document.getElementById("homeBtn");
-  const adminBtn = document.getElementById("adminBtn");
+const yearEl = document.getElementById("year");
 
-  /* Cart Elements */
-  const cartDrawer = document.getElementById("cartDrawer");
-  const cartToggle = document.getElementById("cartToggle");
-  const cartCount = document.getElementById("cartCount");
-  const cartItems = document.getElementById("cartItems");
-  const cartSummary = document.getElementById("cartSummary");
-  const sendOrder = document.getElementById("sendOrder");
+let weights = {};
+let allItems = [];
+let filteredItems = [];
+let currentPage = 1;
+let currentTab = "ALL";
+let currentIndex = -1;
 
-  /* Modal */
-  const modal = document.getElementById("overlayModal");
-  const modalImg = document.getElementById("modalImg");
-  const modalInfo = document.getElementById("modalInfo");
-  const modalPrev = document.getElementById("modalPrev");
-  const modalNext = document.getElementById("modalNext");
-  const modalClose = document.getElementById("modalClose");
-  const orderBtn = document.getElementById("orderBtn");
+/* BUILD MASTER ITEM LIST */
+(function () {
+  for (let m of metals) {
+    for (let t of types) {
+      if (t === "ALL") continue;
 
-  const darkToggle = document.getElementById("darkToggle");
-
-  /* ----------------------
-      STATE
-  ---------------------- */
-  let allItems = [];
-  let weights = {};
-  let viewList = [];
-  let validList = [];
-  let currentPage = 1;
-  let currentCategory = "all";
-  let currentIndex = -1;
-  let cart = [];
-
-  /* ----------------------
-      HELPERS
-  ---------------------- */
-  function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
-  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-  function debounce(fn,ms=150){
-    let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); };
-  }
-  function round3(v){ return Math.round(v*1000)/1000; }
-
-  /* ----------------------
-      BUILD MASTER ITEM LIST
-  ---------------------- */
-  for(const m of metals){
-    for(const t of types){
-      if(t==="all") continue;
-      for(let i=1;i<=maxImages;i++){
-        const id=`${m}_${t}${i}`;
+      for (let i = 1; i <= maxImages; i++) {
+        const id = `${m}_${t}${i}`;
         allItems.push({
           id,
-          src:`${imagesPath}/${id}.jpg`,
-          metal:m,
-          type:t,
-          name:`${cap(t)} ${i}`
+          name: `${t} ${i}`,
+          src: `${imagesPath}/${id}.jpg`,
+          type: t
         });
       }
     }
   }
+})();
 
-  /* ----------------------
-      LOAD WEIGHTS
-  ---------------------- */
-  fetch(weightsFile)
-    .then(r=>r.json())
-    .then(data=>{
-      Object.keys(data).forEach(k=>weights[k.toLowerCase()]=data[k]);
-    })
-    .catch(()=>{})
-    .finally(()=>{
-      initTabs();
-      render();
-    });
+/* LOAD WEIGHTS */
+fetch(weightFile)
+  .then(res => res.json())
+  .then(data => weights = data)
+  .finally(() => initUI());
 
-  /* ----------------------
-      INIT CATEGORY TABS
-  ---------------------- */
-  function initTabs(){
-    categoryTabs.innerHTML="";
 
-    types.forEach(t=>{
-      const tab=document.createElement("button");
-      tab.className="tab";
-      tab.textContent=cap(t);
-      tab.dataset.cat=t;
+/* ----------------------
+      INIT UI
+---------------------- */
+function initUI() {
+  yearEl.textContent = new Date().getFullYear();
 
-      if(t==="all") tab.classList.add("active");
+  /* Build category tabs */
+  categoryTabs.innerHTML = "";
+  types.forEach(t => {
+    const tab = document.createElement("div");
+    tab.className = "tab";
+    tab.textContent = t.toUpperCase();
+    if (t === "ALL") tab.classList.add("active");
 
-      tab.onclick=()=>{
-        document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-        tab.classList.add("active");
+    tab.onclick = () => {
+      document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+      tab.classList.add("active");
+      currentTab = t;
+      currentPage = 1;
+      filterItems();
+    };
 
-        currentCategory=t;
-        currentPage=1;
-        render();
-      };
-
-      categoryTabs.appendChild(tab);
-    });
-  }
-
-  /* ----------------------
-      FILTER PANEL CONTROLS
-  ---------------------- */
-  menuToggle.onclick=()=>filterPanel.classList.toggle("show");
-
-  applyFiltersBtn.onclick=()=>{
-    currentPage=1;
-    filterPanel.classList.remove("show");
-    render();
-  };
-
-  clearFiltersBtn.onclick=()=>{
-    searchBox.value="";
-    weightFrom.value="";
-    weightTo.value="";
-    rangeMin.value=0;
-    rangeMax.value=SLIDER_MAX;
-    currentPage=1;
-    render();
-  };
-
-  homeBtn.onclick=()=>{
-    searchBox.value="";
-    weightFrom.value="";
-    weightTo.value="";
-    rangeMin.value=0;
-    rangeMax.value=SLIDER_MAX;
-
-    currentCategory="all";
-    currentPage=1;
-
-    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-    document.querySelector('.tab[data-cat="all"]').classList.add("active");
-
-    render();
-  };
-
-  adminBtn.onclick=()=>location.href="/dashboard/index.html";
+    categoryTabs.appendChild(tab);
+  });
 
   /* Search */
-  searchBox.addEventListener("input",debounce(()=>{ currentPage=1; render(); },200));
+  searchBox.addEventListener("input", debounce(() => {
+    currentPage = 1;
+    filterItems();
+  }, 150));
 
-  /* Weight sync */
-  rangeMin.oninput=()=>{
-    if(+rangeMin.value > +rangeMax.value) rangeMax.value=rangeMin.value;
-    weightFrom.value=rangeMin.value;
+  /* Weight sliders */
+  rangeMin.oninput = () => {
+    if (+rangeMin.value > +rangeMax.value) rangeMax.value = rangeMin.value;
+    weightFrom.value = rangeMin.value;
   };
-  rangeMax.oninput=()=>{
-    if(+rangeMax.value < +rangeMin.value) rangeMin.value=rangeMax.value;
-    weightTo.value=rangeMax.value;
+  rangeMax.oninput = () => {
+    if (+rangeMax.value < +rangeMin.value) rangeMin.value = rangeMax.value;
+    weightTo.value = rangeMax.value;
   };
-  weightFrom.oninput=()=>rangeMin.value=clamp(weightFrom.value||0,0,SLIDER_MAX);
-  weightTo.oninput=()=>rangeMax.value=clamp(weightTo.value||0,0,SLIDER_MAX);
+  weightFrom.oninput = () => rangeMin.value = weightFrom.value;
+  weightTo.oninput = () => rangeMax.value = weightTo.value;
 
-  /* ----------------------
-      DARK MODE
-  ---------------------- */
-  darkToggle.onclick=()=>{
-    document.body.classList.toggle("dark");
-    localStorage.setItem("slns-dark",document.body.classList.contains("dark"));
-  };
-  if(localStorage.getItem("slns-dark")) document.body.classList.add("dark");
-
-  /* ----------------------
-      CART
-  ---------------------- */
-  cartToggle.onclick=()=>cartDrawer.classList.toggle("show");
-
-  function updateCart(){
-    cartCount.textContent=cart.length;
-    cartItems.innerHTML="";
-
-    cart.forEach((item,i)=>{
-      const div=document.createElement("div");
-      div.className="cart-item";
-      div.innerHTML=`
-        <span>${item.name}</span>
-        <button class="remove">✕</button>
-      `;
-      div.querySelector(".remove").onclick=()=>{
-        cart.splice(i,1);
-        updateCart();
-      };
-      cartItems.appendChild(div);
-    });
-
-    cartSummary.textContent=cart.length+" items";
-  }
-
-  sendOrder.onclick=()=>{
-    if(cart.length===0){ alert("Cart empty"); return; }
-    let msg=cart.map(i=>i.name).join(", ");
-    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`);
+  document.getElementById("applyFilters").onclick = () => {
+    currentPage = 1;
+    filterItems();
   };
 
-  /* ----------------------
-      MAIN FILTER + RENDER
-  ---------------------- */
-  function render(){
-    const q=(searchBox.value||"").toLowerCase();
-    const minW=parseFloat(weightFrom.value);
-    const maxW=parseFloat(weightTo.value);
-    const weightActive=weightFrom.value||weightTo.value;
+  document.getElementById("clearFilters").onclick = () => {
+    searchBox.value = "";
+    weightFrom.value = "";
+    weightTo.value = "";
+    rangeMin.value = 0;
+    rangeMax.value = SLIDER_MAX;
+    currentPage = 1;
+    filterItems();
+  };
 
-    viewList = allItems.filter(it=>{
-      if(currentCategory!=="all" && it.type!==currentCategory) return false;
+  /* Filter panel toggle */
+  menuToggle.onclick = () => filterPanel.classList.toggle("show");
 
-      if(q && !it.id.toLowerCase().includes(q) && !it.name.toLowerCase().includes(q))
-        return false;
+  /* Cart toggle */
+  cartToggle.onclick = () => cartDrawer.classList.toggle("show");
 
-      if(weightActive){
-        const w=weights[it.id.toLowerCase()];
-        if(w==null) return false;
-        if(!(w >= (isNaN(minW)?-Infinity:minW) &&
-             w <= (isNaN(maxW)?Infinity:maxW)))
-          return false;
-      }
-      return true;
-    });
+  /* Modal buttons */
+  modalClose.onclick = closeModal;
+  modalPrev.onclick = () => showModal(-1);
+  modalNext.onclick = () => showModal(1);
 
-    checkImages();
-  }
+  document.addEventListener("keydown", e => {
+    if (modal.hidden) return;
+    if (e.key === "Escape") closeModal();
+    if (e.key === "ArrowLeft") showModal(-1);
+    if (e.key === "ArrowRight") showModal(1);
+  });
 
-  /* ----------------------
-      CHECK IMAGE EXIST
-  ---------------------- */
-  function checkImages(){
-    validList=[];
-    let pending=viewList.length;
+  modal.onclick = (e) => {
+    if (e.target === modal) closeModal();
+  };
 
-    if(pending===0){ updateGallery(); return; }
+  filterItems();
+}
 
-    viewList.forEach(it=>{
-      const img=new Image();
-      img.src=it.src;
-      img.onload=()=>{ validList.push(it); if(--pending===0) updateGallery(); };
-      img.onerror=()=>{ if(--pending===0) updateGallery(); };
+
+/* ----------------------
+      FILTERING
+---------------------- */
+function filterItems() {
+  const q = searchBox.value.toLowerCase();
+  let list = [...allItems];
+
+  if (currentTab !== "ALL") list = list.filter(i => i.type === currentTab);
+
+  if (q) list = list.filter(i => i.id.toLowerCase().includes(q));
+
+  const wFrom = parseFloat(weightFrom.value);
+  const wTo = parseFloat(weightTo.value);
+
+  if (weightFrom.value || weightTo.value) {
+    list = list.filter(i => {
+      const w = weights[i.id.toLowerCase()];
+      return w && w >= (wFrom || 0) && w <= (wTo || SLIDER_MAX);
     });
   }
 
-  /* ----------------------
+  filteredItems = list;
+  renderGallery();
+}
+
+
+/* ----------------------
       GALLERY
-  ---------------------- */
-  function updateGallery(){
-    gallery.innerHTML="";
+---------------------- */
+function renderGallery() {
+  gallery.innerHTML = "";
 
-    if(validList.length===0){
-      noImages.hidden=false;
-      paginationEl.innerHTML="";
-      return;
-    }
-    noImages.hidden=true;
-
-    const total=validList.length;
-    const totalPages=Math.ceil(total/itemsPerPage);
-    currentPage=clamp(currentPage,1,totalPages);
-
-    const start=(currentPage-1)*itemsPerPage;
-    const items=validList.slice(start,start+itemsPerPage);
-
-    items.forEach((it,idx)=>{
-      const card=document.createElement("div");
-      card.className="card";
-
-      const wrap=document.createElement("div");
-      wrap.className="imgwrap";
-
-      const img=document.createElement("img");
-      img.loading="lazy";
-      img.src=it.src;
-      img.onload=()=>img.classList.add("loaded");
-
-      wrap.appendChild(img);
-
-      const name=document.createElement("div");
-      name.textContent=it.name;
-
-      const w=document.createElement("div");
-      w.className="weight";
-      const wt=weights[it.id.toLowerCase()];
-      w.textContent=wt!=null?`${wt} g`:"";
-
-      const btn=document.createElement("button");
-      btn.className="add";
-      btn.textContent="Add to Basket";
-      btn.onclick=e=>{
-        e.stopPropagation();
-        cart.push(it);
-        updateCart();
-      };
-
-      card.append(wrap,name,w,btn);
-
-      /* Proper modal open */
-      card.onclick=()=>openModal(start+idx);
-
-      gallery.appendChild(card);
-    });
-
-    renderPagination(totalPages);
+  if (filteredItems.length === 0) {
+    noImages.hidden = false;
+    pagination.innerHTML = "";
+    return;
   }
 
-  /* ----------------------
+  noImages.hidden = true;
+
+  const pages = Math.ceil(filteredItems.length / perPage);
+  if (currentPage > pages) currentPage = pages;
+
+  const start = (currentPage - 1) * perPage;
+  const items = filteredItems.slice(start, start + perPage);
+
+  items.forEach((it, idx) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const wrap = document.createElement("div");
+    wrap.className = "imgwrap";
+
+    const img = document.createElement("img");
+    img.dataset.src = it.src;
+
+    img.onload = () => img.classList.add("loaded");
+    observeLazy(img);
+
+    wrap.appendChild(img);
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = it.name;
+
+    const wDiv = document.createElement("div");
+    wDiv.className = "weight";
+    const w = weights[it.id.toLowerCase()];
+    wDiv.textContent = w ? `${w} g` : "";
+
+    card.append(wrap, meta, wDiv);
+
+    card.onclick = () => openModal(start + idx);
+
+    gallery.appendChild(card);
+  });
+
+  renderPagination(pages);
+}
+
+/* ----------------------
       PAGINATION
-  ---------------------- */
-  function renderPagination(tp){
-    paginationEl.innerHTML="";
+---------------------- */
+function renderPagination(pages) {
+  pagination.innerHTML = "";
+  if (pages < 2) return;
 
-    const prev=document.createElement("button");
-    prev.textContent="Prev";
-    prev.disabled=currentPage===1;
-    prev.onclick=()=>{ currentPage--; updateGallery(); };
-    paginationEl.appendChild(prev);
+  for (let i = 1; i <= pages; i++) {
+    const btn = document.createElement("button");
+    btn.className = "btn page";
+    btn.textContent = i;
+    if (i === currentPage) btn.classList.add("primary");
 
-    for(let p=1;p<=tp;p++){
-      const btn=document.createElement("button");
-      btn.textContent=p;
-      if(p===currentPage) btn.classList.add("active");
-      btn.onclick=()=>{ currentPage=p; updateGallery(); };
-      paginationEl.appendChild(btn);
+    btn.onclick = () => {
+      currentPage = i;
+      renderGallery();
+    };
+
+    pagination.appendChild(btn);
+  }
+}
+
+/* ----------------------
+      LAZY LOADING
+---------------------- */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      img.src = img.dataset.src;
+      observer.unobserve(img);
     }
-
-    const next=document.createElement("button");
-    next.textContent="Next";
-    next.disabled=currentPage===tp;
-    next.onclick=()=>{ currentPage++; updateGallery(); };
-    paginationEl.appendChild(next);
-  }
-
-  /* ----------------------
-      MODAL — FIXED
-  ---------------------- */
-  function openModal(i){
-    currentIndex=i;
-    updateModal();
-    modal.classList.add("open");
-    modal.hidden=false;
-  }
-
-  function closeModal(){
-    modal.classList.remove("open");
-    modal.hidden=true;
-  }
-
-  modalClose.addEventListener("click",(e)=>{
-    e.stopPropagation();
-    closeModal();
   });
+});
+function observeLazy(img) { observer.observe(img); }
 
-  modal.addEventListener("click",(e)=>{
-    if(e.target===modal) closeModal();
-  });
 
-  document.addEventListener("keydown",e=>{
-    if(modal.hidden) return;
-    if(e.key==="Escape") closeModal();
-    if(e.key==="ArrowLeft") showPrev();
-    if(e.key==="ArrowRight") showNext();
-  });
+/* ----------------------
+      MODAL
+---------------------- */
+function openModal(i) {
+  currentIndex = i;
+  updateModal();
+  modal.hidden = false;  // FIXED
+}
+function closeModal() {
+  modal.hidden = true;
+}
+function showModal(step) {
+  currentIndex = (currentIndex + step + filteredItems.length) % filteredItems.length;
+  updateModal();
+}
+function updateModal() {
+  const it = filteredItems[currentIndex];
+  modalImg.src = it.src;
+  const w = weights[it.id.toLowerCase()];
+  modalInfo.textContent = w ? `${it.name} — ${w} g` : it.name;
+  orderBtn.href = `https://wa.me/917780220369?text=${encodeURIComponent(it.name)}`;
+}
 
-  function showPrev(){
-    currentIndex=(currentIndex-1+validList.length)%validList.length;
-    updateModal();
-  }
-  function showNext(){
-    currentIndex=(currentIndex+1)%validList.length;
-    updateModal();
-  }
 
-  modalPrev.onclick=showPrev;
-  modalNext.onclick=showNext;
-
-  function updateModal(){
-    const it=validList[currentIndex];
-    if(!it) return;
-
-    modalImg.src=it.src;
-    const w=weights[it.id.toLowerCase()];
-    modalInfo.textContent=w!=null?`${it.name} — ${w} g`:it.name;
-
-    orderBtn.href=`https://wa.me/${waNumber}?text=${encodeURIComponent(it.name)}`;
-  }
-
-  /* ----------------------
-      INITIAL RENDER
-  ---------------------- */
-  updateCart();
-  render();
-
-}); // END DOMContentLoaded
+/* ----------------------
+      UTIL
+---------------------- */
+function debounce(fn, ms) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), ms);
+  };
+}
