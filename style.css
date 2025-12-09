@@ -71,6 +71,59 @@ body {
   justify-content: center;
   cursor: pointer;
 }
+/* CATEGORY BAR — Premium Round Icon Layout */
+.category-bar {
+  display: flex;
+  gap: 24px;
+  padding: 16px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.category-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.category-item {
+  flex: 0 0 auto;
+  text-align: center;
+  cursor: pointer;
+}
+
+.category-item .cat-img-wrap {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #ffffff;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  margin: auto;
+  transition: 0.25s;
+}
+
+.category-item.active .cat-img-wrap {
+  transform: scale(1.12);
+  border-color: #0a463d;
+  box-shadow: 0 5px 14px rgba(0,0,0,0.28);
+}
+
+.category-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.category-item .cat-label {
+  margin-top: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #143;
+  transition: 0.25s;
+}
+
+.category-item.active .cat-label {
+  color: #0a463d;
+}
 
 /* ---------- CATEGORY BAR (Always Visible) ---------- */
 .category-bar {
@@ -264,3 +317,4 @@ body {
   opacity: 0.6;
   font-size: 14px;
 }
+
