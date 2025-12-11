@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="style.css" />
   <meta name="theme-color" content="#0b0c0e" />
 </head>
+
 <body>
 
   <!-- TOP BAR -->
@@ -21,31 +22,27 @@
     <div class="brand">SLNS Jewellery</div>
 
     <div class="right">
-      <button id="darkToggle" class="icon-btn" title="Dark Mode">🌓</button>
-      <button id="menuToggle" class="icon-btn" title="Filters">☰</button>
-      <button id="cartToggle" class="icon-btn" title="Cart">
+      <button id="menuToggle" class="icon-btn">☰</button>
+      <button id="cartToggle" class="icon-btn">
         🧾 <span id="cartCount" class="badge">0</span>
       </button>
     </div>
-    <div id="categoryBar" class="category-bar"></div>
   </header>
 
-  <!-- ALWAYS VISIBLE CATEGORY BAR -->
-  <nav class="category-bar">
-    <div class="tabs" id="categoryTabs" role="tablist"></div>
-  </nav>
+  <!-- CATEGORY BAR -->
+  <div id="categoryBar" class="category-bar"></div>
 
   <!-- FILTER PANEL -->
   <div id="filterPanel" class="filter-panel" aria-hidden="true">
-    <div class="fp-row">
+    <div class="fp-content">
       
-      <input id="searchBox" placeholder="Search items..." />
+      <input id="searchBox" placeholder="Search..." />
 
       <div class="weights">
         <label>Weight (g)</label>
         <div class="weight-row">
-          <input id="weightFrom" type="number" step="0.001" placeholder="from" />
-          <input id="weightTo" type="number" step="0.001" placeholder="to" />
+          <input id="weightFrom" type="number" placeholder="from" />
+          <input id="weightTo" type="number" placeholder="to" />
         </div>
 
         <div class="range-row">
@@ -58,32 +55,21 @@
         <button id="applyFilters" class="btn primary">Apply</button>
         <button id="clearFilters" class="btn">Clear</button>
       </div>
-
     </div>
   </div>
 
   <!-- GALLERY -->
   <main class="container">
     <section id="gallery" class="gallery"></section>
-    <div id="noImages" class="no-images" hidden>No items found.</div>
+    <div id="noImages" class="no-images" hidden>No items found</div>
     <nav id="pagination" class="pagination"></nav>
   </main>
 
-  <!-- CART DRAWER -->
-  <aside id="cartDrawer" class="cart-drawer" aria-hidden="true">
-    <h3>Order Basket</h3>
-    <div id="cartItems" class="cart-items"></div>
-    <div class="cart-footer">
-      <div id="cartSummary" class="cart-summary">0 items</div>
-      <button id="sendOrder" class="btn primary">Send Order (WhatsApp)</button>
-    </div>
-  </aside>
-
-  <!-- MODAL PREVIEW -->
+  <!-- MODAL -->
   <div id="overlayModal" class="overlay-modal" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true">
-      <button id="modalClose" class="modal-close" title="Close">×</button>
-      <img id="modalImg" src="" alt="Preview" />
+    <div class="modal-card">
+      <button id="modalClose" class="modal-close">×</button>
+      <img id="modalImg" src="" alt="" />
       <div id="modalInfo" class="modal-info"></div>
       <button id="modalPrev" class="modal-nav prev">‹</button>
       <button id="modalNext" class="modal-nav next">›</button>
@@ -91,9 +77,18 @@
     </div>
   </div>
 
+  <!-- CART -->
+  <aside id="cartDrawer" class="cart-drawer" aria-hidden="true">
+    <h3>Order Basket</h3>
+    <div id="cartItems" class="cart-items"></div>
+    <div class="cart-footer">
+      <div id="cartSummary" class="cart-summary">0 items</div>
+      <button id="sendOrder" class="btn primary">Send Order</button>
+    </div>
+  </aside>
+
   <footer class="footer">© <span id="year"></span> SLNS Jewellery — V7</footer>
 
   <script src="script-v7.js"></script>
 </body>
 </html>
-
