@@ -5,6 +5,25 @@
    - Order (WhatsApp) only opens on user clicks
 */
 
+// SAFETY: prevent auto-popups from old/deployed code until user interacts
+(function(){
+  if(window.__slns_open_guard) return;
+  window.__slns_open_guard = true;
+  const origOpen = window.open.bind(window);
+  let userInteracted = false;
+  const allow = ()=>{ userInteracted = true; window.removeEventListener('click', allow); window.removeEventListener('keydown', allow); };
+  window.addEventListener('click', allow, {once:true});
+  window.addEventListener('keydown', allow, {once:true});
+  window.open = function(url, name, specs){
+    if(!userInteracted){
+      console.warn('Blocked automatic window.open to', url);
+      return null;
+    }
+    return origOpen(url, name, specs);
+  };
+})();
+
+
 document.addEventListener("DOMContentLoaded", () => {
   /* ====== CONFIG ====== */
   const metals = ["gold"];
@@ -488,3 +507,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // done
 }); // end DOMContentLoaded
+
