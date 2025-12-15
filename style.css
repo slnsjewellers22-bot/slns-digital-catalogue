@@ -272,6 +272,14 @@ input::placeholder { color: #ccc; }
 /* ---------------------------------------------------------
    MODAL (Glass)
 --------------------------------------------------------- */
+/* MODAL VISIBILITY CONTROL */
+.overlay-modal {
+  display: none;
+}
+
+.overlay-modal.show {
+  display: flex;
+}
 .overlay-modal {
   position: fixed;
   inset: 0;
@@ -390,3 +398,4 @@ input::placeholder { color: #ccc; }
   font-size: 0.9rem;
   margin-top: 20px;
 }
+
