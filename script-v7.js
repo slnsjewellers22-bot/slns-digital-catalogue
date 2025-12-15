@@ -194,49 +194,63 @@ function renderPagination(total){
 
 /* ================= MODAL ================= */
 
-modal.hidden = true;
+/* FORCE MODAL CLOSED ON LOAD */
+modal.classList.remove("show");
 
-function openModal(index){
-  currentIndex=index;
+/*modal.hidden = true;*/
+
+/* OPEN */
+function openModal(index) {
+  currentIndex = index;
   updateModal();
-  modal.hidden=false;
+  modal.classList.add("show");
 }
 
-function closeModal(){
-  modal.hidden=true;
-  modalImg.src="";
-  modalInfo.textContent="";
+/* CLOSE */
+function closeModal() {
+  modal.classList.remove("show");
+  modalImg.src = "";
+  modalInfo.textContent = "";
   orderBtn.removeAttribute("href");
 }
 
-function updateModal(){
+/* UPDATE */
+function updateModal() {
   const it = validItems[currentIndex];
-  if(!it) return;
+  if (!it) return;
 
   modalImg.src = it.src;
   const w = weights[it.id];
-  modalInfo.textContent = w? `${it.name} — ${w} g`: it.name;
+  modalInfo.textContent = w ? `${it.name} — ${w} g` : it.name;
 
   orderBtn.href =
-    `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(it.name)}`;
+    `https://wa.me/917780220369?text=${encodeURIComponent(it.name)}`;
 }
 
-modalClose.onclick = closeModal;
-modalPrev.onclick = ()=>{
-  currentIndex = (currentIndex-1+validItems.length)%validItems.length;
-  updateModal();
-};
-modalNext.onclick = ()=>{
-  currentIndex = (currentIndex+1)%validItems.length;
-  updateModal();
-};
-modal.onclick = e=>{ if(e.target===modal) closeModal(); };
+/* CONTROLS */
+modalClose.addEventListener("click", closeModal);
 
-document.addEventListener("keydown",e=>{
-  if(modal.hidden) return;
-  if(e.key==="Escape") closeModal();
-  if(e.key==="ArrowLeft") modalPrev.click();
-  if(e.key==="ArrowRight") modalNext.click();
+modalPrev.addEventListener("click", () => {
+  currentIndex = (currentIndex - 1 + validItems.length) % validItems.length;
+  updateModal();
+});
+
+modalNext.addEventListener("click", () => {
+  currentIndex = (currentIndex + 1) % validItems.length;
+  updateModal();
+});
+
+/* CLICK OUTSIDE */
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) closeModal();
+});
+
+/* KEYBOARD */
+document.addEventListener("keydown", (e) => {
+  if (!modal.classList.contains("show")) return;
+  if (e.key === "Escape") closeModal();
+  if (e.key === "ArrowLeft") modalPrev.click();
+  if (e.key === "ArrowRight") modalNext.click();
 });
 
 /* FILTER BUTTONS */
@@ -251,3 +265,4 @@ clearFiltersBtn.onclick=()=>{
   document.querySelector('.category-item[data-cat="all"]').classList.add("active");
   render();
 };
+
