@@ -18,84 +18,345 @@
     "timestamp": 1763380228913
   },
   {
-    "id": "gold_bangles8",
-    "name": "gold bangles8",
+    "id": "gold_chain1",
+    "name": "gold chain1",
     "metal": "gold",
-    "category": "bangles",
-    "weight": 50,
-    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles8.jpg",
-    "timestamp": 1768567697761
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain1.jpg",
+    "timestamp": 1768567901668
   },
   {
-    "id": "gold_bangles9",
-    "name": "gold bangles9",
+    "id": "gold_chain2",
+    "name": "gold chain2",
     "metal": "gold",
-    "category": "bangles",
-    "weight": 50,
-    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles9.jpg",
-    "timestamp": 1768567701428
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain2.jpg",
+    "timestamp": 1768567903576
   },
   {
-    "id": "gold_bangles10",
-    "name": "gold bangles10",
+    "id": "gold_chain3",
+    "name": "gold chain3",
     "metal": "gold",
-    "category": "bangles",
-    "weight": 50,
-    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles10.jpg",
-    "timestamp": 1768567704140
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain3.jpg",
+    "timestamp": 1768567905508
   },
   {
-    "id": "gold_bangles1",
-    "name": "gold bangles1",
+    "id": "gold_chain4",
+    "name": "gold chain4",
     "metal": "gold",
-    "category": "bangles",
-    "weight": 50,
-    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles1.jpg",
-    "timestamp": 1768567706193
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain4.jpg",
+    "timestamp": 1768567907930
   },
   {
-    "id": "gold_bangles2",
-    "name": "gold bangles2",
+    "id": "gold_chain5",
+    "name": "gold chain5",
     "metal": "gold",
-    "category": "bangles",
-    "weight": 50,
-    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles2.jpg",
-    "timestamp": 1768567708329
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain5.jpg",
+    "timestamp": 1768567910304
   },
   {
-    "id": "gold_bangles3",
-    "name": "gold bangles3",
+    "id": "gold_chain6",
+    "name": "gold chain6",
     "metal": "gold",
-    "category": "bangles",
-    "weight": 50,
-    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles3.jpg",
-    "timestamp": 1768567710467
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain6.jpg",
+    "timestamp": 1768567913910
   },
   {
-    "id": "gold_bangles4",
-    "name": "gold bangles4",
+    "id": "gold_chain7",
+    "name": "gold chain7",
     "metal": "gold",
-    "category": "bangles",
-    "weight": 50,
-    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles4.jpg",
-    "timestamp": 1768567712708
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain7.jpg",
+    "timestamp": 1768567916057
   },
   {
-    "id": "gold_bangles5",
-    "name": "gold bangles5",
+    "id": "gold_chain8",
+    "name": "gold chain8",
     "metal": "gold",
-    "category": "bangles",
-    "weight": 50,
-    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles5.jpg",
-    "timestamp": 1768567715138
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain8.jpg",
+    "timestamp": 1768567918079
   },
   {
-    "id": "gold_bangles6",
-    "name": "gold bangles6",
+    "id": "gold_chain9",
+    "name": "gold chain9",
     "metal": "gold",
-    "category": "bangles",
-    "weight": 50,
-    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles6.jpg",
-    "timestamp": 1768567717242
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain9.jpg",
+    "timestamp": 1768567919753
+  },
+  {
+    "id": "gold_chain10",
+    "name": "gold chain10",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain10.jpg",
+    "timestamp": 1768567921785
+  },
+  {
+    "id": "gold_chain11",
+    "name": "gold chain11",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain11.jpg",
+    "timestamp": 1768567923753
+  },
+  {
+    "id": "gold_chain12",
+    "name": "gold chain12",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain12.jpg",
+    "timestamp": 1768567925270
+  },
+  {
+    "id": "gold_chain13",
+    "name": "gold chain13",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain13.jpg",
+    "timestamp": 1768567926847
+  },
+  {
+    "id": "gold_chain14",
+    "name": "gold chain14",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain14.jpg",
+    "timestamp": 1768567928774
+  },
+  {
+    "id": "gold_chain15",
+    "name": "gold chain15",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain15.jpg",
+    "timestamp": 1768567930741
+  },
+  {
+    "id": "gold_chain16",
+    "name": "gold chain16",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain16.jpg",
+    "timestamp": 1768567932643
+  },
+  {
+    "id": "gold_chain17",
+    "name": "gold chain17",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain17.jpg",
+    "timestamp": 1768567934582
+  },
+  {
+    "id": "gold_chain18",
+    "name": "gold chain18",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain18.jpg",
+    "timestamp": 1768567936577
+  },
+  {
+    "id": "gold_chain19",
+    "name": "gold chain19",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain19.jpg",
+    "timestamp": 1768567939558
+  },
+  {
+    "id": "gold_chain20",
+    "name": "gold chain20",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain20.jpg",
+    "timestamp": 1768567943175
+  },
+  {
+    "id": "gold_chain21",
+    "name": "gold chain21",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain21.jpg",
+    "timestamp": 1768567945187
+  },
+  {
+    "id": "gold_chain22",
+    "name": "gold chain22",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain22.jpg",
+    "timestamp": 1768567947195
+  },
+  {
+    "id": "gold_chain23",
+    "name": "gold chain23",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain23.jpg",
+    "timestamp": 1768567949067
+  },
+  {
+    "id": "gold_chain24",
+    "name": "gold chain24",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain24.jpg",
+    "timestamp": 1768567951462
+  },
+  {
+    "id": "gold_chain25",
+    "name": "gold chain25",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain25.jpg",
+    "timestamp": 1768567953303
+  },
+  {
+    "id": "gold_chain26",
+    "name": "gold chain26",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain26.jpg",
+    "timestamp": 1768567955256
+  },
+  {
+    "id": "gold_chain27",
+    "name": "gold chain27",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain27.jpg",
+    "timestamp": 1768567957241
+  },
+  {
+    "id": "gold_chain28",
+    "name": "gold chain28",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain28.jpg",
+    "timestamp": 1768567959210
+  },
+  {
+    "id": "gold_chain29",
+    "name": "gold chain29",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain29.jpg",
+    "timestamp": 1768567961600
+  },
+  {
+    "id": "gold_chain30",
+    "name": "gold chain30",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain30.jpg",
+    "timestamp": 1768567963587
+  },
+  {
+    "id": "gold_chain31",
+    "name": "gold chain31",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain31.jpg",
+    "timestamp": 1768567965332
+  },
+  {
+    "id": "gold_chain32",
+    "name": "gold chain32",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain32.jpg",
+    "timestamp": 1768567967151
+  },
+  {
+    "id": "gold_chain33",
+    "name": "gold chain33",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain33.jpg",
+    "timestamp": 1768567969077
+  },
+  {
+    "id": "gold_chain34",
+    "name": "gold chain34",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain34.jpg",
+    "timestamp": 1768567971639
+  },
+  {
+    "id": "gold_chain35",
+    "name": "gold chain35",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain35.jpg",
+    "timestamp": 1768567973188
+  },
+  {
+    "id": "gold_chain36",
+    "name": "gold chain36",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain36.jpg",
+    "timestamp": 1768567975098
+  },
+  {
+    "id": "gold_chain37",
+    "name": "gold chain37",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain37.jpg",
+    "timestamp": 1768567977116
+  },
+  {
+    "id": "gold_chain38",
+    "name": "gold chain38",
+    "metal": "gold",
+    "category": "chain",
+    "weight": 25,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_chain38.jpg",
+    "timestamp": 1768567978988
   }
 ]
