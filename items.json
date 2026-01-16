@@ -16,5 +16,86 @@
     "weight": 38,
     "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_necklace25.jpg",
     "timestamp": 1763380228913
+  },
+  {
+    "id": "gold_bangles8",
+    "name": "gold bangles8",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 50,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles8.jpg",
+    "timestamp": 1768567697761
+  },
+  {
+    "id": "gold_bangles9",
+    "name": "gold bangles9",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 50,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles9.jpg",
+    "timestamp": 1768567701428
+  },
+  {
+    "id": "gold_bangles10",
+    "name": "gold bangles10",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 50,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles10.jpg",
+    "timestamp": 1768567704140
+  },
+  {
+    "id": "gold_bangles1",
+    "name": "gold bangles1",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 50,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles1.jpg",
+    "timestamp": 1768567706193
+  },
+  {
+    "id": "gold_bangles2",
+    "name": "gold bangles2",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 50,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles2.jpg",
+    "timestamp": 1768567708329
+  },
+  {
+    "id": "gold_bangles3",
+    "name": "gold bangles3",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 50,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles3.jpg",
+    "timestamp": 1768567710467
+  },
+  {
+    "id": "gold_bangles4",
+    "name": "gold bangles4",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 50,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles4.jpg",
+    "timestamp": 1768567712708
+  },
+  {
+    "id": "gold_bangles5",
+    "name": "gold bangles5",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 50,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles5.jpg",
+    "timestamp": 1768567715138
+  },
+  {
+    "id": "gold_bangles6",
+    "name": "gold bangles6",
+    "metal": "gold",
+    "category": "bangles",
+    "weight": 50,
+    "imageURL": "https://raw.githubusercontent.com/slnsjewellers22-bot/slns-digital-catalogue/main/images/gold_bangles6.jpg",
+    "timestamp": 1768567717242
   }
 ]
