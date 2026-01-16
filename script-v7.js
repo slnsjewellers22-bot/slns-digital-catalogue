@@ -8,7 +8,7 @@
 /* CONFIG */
 const metals = ["gold"];
 const types = [
-  "bangles","bracelet","chain","chandraharalu",
+  "bangles","bracelet","chain","C.Haram",
   "earring","kada","locket","necklace","npchains","ring"
 ];
 const maxImages = 100;
@@ -265,4 +265,5 @@ clearFiltersBtn.onclick=()=>{
   document.querySelector('.category-item[data-cat="all"]').classList.add("active");
   render();
 };
+
 
