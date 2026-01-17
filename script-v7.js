@@ -266,4 +266,18 @@ clearFiltersBtn.onclick=()=>{
   render();
 };
 
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById("installBtn").hidden = false;
+});
+
+document.getElementById("installBtn")?.addEventListener("click", async () => {
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+});
+
 
