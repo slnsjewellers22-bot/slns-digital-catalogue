@@ -48,6 +48,7 @@ let validItems = [];
 let currentIndex = -1;
 let currentPage = 1;
 let activeCategory = "all";
+let cart = [];
 
 /* BUILD ITEMS */
 (function buildItems(){
@@ -69,7 +70,7 @@ let activeCategory = "all";
 /* LOAD WEIGHTS */
 fetch(weightsFile)
   .then(r=>r.json())
-  .then(d=>weights=d||{})
+  .then(data=>weights=data||{})
   .catch(()=>weights={})
   .finally(()=>{
     buildCategoryBar();
@@ -223,8 +224,7 @@ function updateModal() {
   const w = weights[it.id];
   modalInfo.textContent = w ? `${it.name} — ${w} g` : it.name;
 
-  orderBtn.href =
-    `https://wa.me/917780220369?text=${encodeURIComponent(it.name)}`;
+  orderBtn.onclick = () => sendWhatsAppOrder(it);
 }
 
 /* CONTROLS */
@@ -253,6 +253,18 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight") modalNext.click();
 });
 
+/* WHATSAPP ORDER */
+function sendWhatsAppOrder(item) {
+  const w = weights[item.id] ? ` — ${weights[item.id]} g` : "";
+  const imgURL = `${location.origin}/${item.src}`;
+
+  const msg = encodeURIComponent(
+    `SLNS Jewellery – Order Request\n\n${item.name}${w}\nImage: ${imgURL}`
+  );
+
+  window.open(`https://wa.me/${WHATSAPP_NO}?text=${msg}`, "_blank");
+}
+
 /* FILTER BUTTONS */
 applyFiltersBtn.onclick=()=>{currentPage=1;render();};
 clearFiltersBtn.onclick=()=>{
@@ -279,5 +291,6 @@ document.getElementById("installBtn")?.addEventListener("click", async () => {
   await deferredPrompt.userChoice;
   deferredPrompt = null;
 });
+
 
 
