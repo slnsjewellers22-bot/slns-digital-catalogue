@@ -1,18 +1,21 @@
-const CACHE = 'slns-v7-v1';
-const ASSETS = ['/', '/index.html', '/style.css', '/script-v7.js', '/manifest.json'];
+const CACHE_NAME = "slns-v7-cache";
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
-  self.skipWaiting();
+const ASSETS = [
+  "/",
+  "/index.html",
+  "/style.css",
+  "/script-v7.js",
+  "/manifest.json"
+];
+
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+  );
 });
-self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
-self.addEventListener('fetch', e => {
-  if(e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request).then(r=>r || fetch(e.request).then(resp=>{
-    if(resp && resp.status===200 && resp.type==='basic') {
-      const copy = resp.clone();
-      caches.open(CACHE).then(c=>c.put(e.request, copy));
-    }
-    return resp;
-  }).catch(()=>caches.match('/index.html'))));
+
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    caches.match(event.request).then(res => res || fetch(event.request))
+  );
 });
