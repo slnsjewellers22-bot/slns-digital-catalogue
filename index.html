@@ -23,6 +23,7 @@
 
     <div class="right">
       <button id="menuToggle" class="icon-btn">☰</button>
+      <button id="installBtn" class="btn" hidden>Install App</button>
       <button id="cartToggle" class="icon-btn">
         🧾 <span id="cartCount" class="badge">0</span>
       </button>
@@ -91,8 +92,17 @@
 
   <script src="script-v7.js" defer></script>
 
+  <script>
+   if ("serviceWorker" in navigator) {
+     window.addEventListener("load", () => {
+       navigator.serviceWorker.register("/service-worker.js");
+   });
+  }
+  </script>
+
 </body>
 </html>
+
 
 
 
